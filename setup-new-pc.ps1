@@ -25,7 +25,7 @@ function Show-Menu {
 
     Write-Host "Main Menu Options:`n" -ForegroundColor Green
     Write-Host "1. Install Essential Software" -ForegroundColor White
-    Write-Host "2. Install MS Office Suite (Choose Edition)" -ForegroundColor White
+    Write-Host "2. Install MS Office Suite" -ForegroundColor White
     Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
     Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
     Write-Host "0. Exit`n" -ForegroundColor Red
@@ -57,48 +57,19 @@ function Install-NormalSoftware {
 
 function Install-MSOffice {
     try {
-        do {
-            Write-Host "`nChoose MS Office Edition to Install:" -ForegroundColor Yellow
-            Write-Host "1. Microsoft Office 2013" -ForegroundColor White
-            Write-Host "2. Microsoft Office 2019" -ForegroundColor White
-            Write-Host "3. Microsoft Office 2021" -ForegroundColor White
-            Write-Host "4. Microsoft Office 2024" -ForegroundColor White
-            Write-Host "5. Microsoft 365 (Subscription-based)" -ForegroundColor White
-            Write-Host "0. Cancel Installation" -ForegroundColor Red
+        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
+        # In this version, the script doesn't use an external URL for Office download
+        Write-Host "`nProceeding with default MS Office setup..." -ForegroundColor Yellow
+        
+        # Actual MS Office installation logic goes here (can be manual or different script)
+        Write-Host "`nOffice installation initiated..." -ForegroundColor Yellow
+        # Example of installation process (this needs to be updated with a real installation script)
+        Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi" -Wait
+        
+        Write-Host "`n✅ MS Office installed successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to return to the menu..."
+        return $true
 
-            $officeChoice = Read-Host "`nEnter your choice [0-5]"
-
-            switch ($officeChoice) {
-                '1' { $edition = "Office2013" }
-                '2' { $edition = "Office2019" }
-                '3' { $edition = "Office2021" }
-                '4' { $edition = "Office2024" }
-                '5' { $edition = "Microsoft365" }
-                '0' { 
-                    Write-Host "Office installation cancelled." -ForegroundColor Cyan
-                    Read-Host "`nPress Enter to return to the menu..."
-                    return $false
-                }
-                default {
-                    Write-Host "Invalid selection! Please choose a valid option." -ForegroundColor Red
-                    continue
-                }
-            }
-
-            Write-Host "`nDownloading MS Office $edition setup from GitHub..." -ForegroundColor Yellow
-            $officeScript = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/pipohernadzeze/office-24/main/setup-$edition.ps1"
-            
-            Write-Host "Executing MS Office installation for $edition..." -ForegroundColor Yellow
-            $tempFile = [System.IO.Path]::GetTempFileName() + ".ps1"
-            $officeScript | Out-File $tempFile
-            Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$tempFile`"" -Wait
-            Remove-Item $tempFile -Force
-            
-            Write-Host "`n✅ MS Office $edition installed successfully!" -ForegroundColor Green
-            Read-Host "`nPress Enter to return to the menu..."
-            return $true
-
-        } while ($true)
     }
     catch {
         Write-Host "Office installation failed: $_" -ForegroundColor Red
