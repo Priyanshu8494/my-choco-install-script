@@ -25,9 +25,8 @@ function Show-Menu {
 
     Write-Host "Main Menu Options:`n" -ForegroundColor Green
     Write-Host "1. Install Essential Software" -ForegroundColor White
-    Write-Host "   (Chrome, Firefox, WinRAR, VLC, Adobe Reader, AnyDesk, UltraViewer)"
-    Write-Host "2. Install MS Office Suite" -ForegroundColor White
-    Write-Host "3. System Activation Toolkit" -ForegroundColor White
+    Write-Host "2. Install MS Office Suite (Choose Edition)" -ForegroundColor White
+    Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
     Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
     Write-Host "0. Exit`n" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Cyan
@@ -55,15 +54,43 @@ function Install-NormalSoftware {
 
 function Install-MSOffice {
     try {
-        Write-Host "Downloading Office installation script..." -ForegroundColor Yellow
-        $officeScript = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/Priyanshu8494/ms-office-install-script/main/setup-office.ps1'
+        Write-Host "Choose MS Office Edition to Install:" -ForegroundColor Yellow
+        Write-Host "1. Microsoft Office 2013" -ForegroundColor White
+        Write-Host "2. Microsoft Office 2019" -ForegroundColor White
+        Write-Host "3. Microsoft Office 2021" -ForegroundColor White
+        Write-Host "4. Microsoft Office 2024" -ForegroundColor White
+        Write-Host "5. Microsoft 365 (Subscription-based)" -ForegroundColor White
+        Write-Host "0. Cancel Installation" -ForegroundColor Red
+
+        $officeChoice = Read-Host "`nEnter your choice [0-5]"
+
+        switch ($officeChoice) {
+            '1' { $edition = "Office2013" }
+            '2' { $edition = "Office2019" }
+            '3' { $edition = "Office2021" }
+            '4' { $edition = "Office2024" }
+            '5' { $edition = "Microsoft365" }
+            '0' { 
+                Write-Host "Office installation cancelled." -ForegroundColor Cyan
+                return $false
+            }
+            default {
+                Write-Host "Invalid selection! Cancelling installation..." -ForegroundColor Red
+                return $false
+            }
+        }
+
+        Write-Host "`nDownloading MS Office $edition installation script..." -ForegroundColor Yellow
+        $officeScript = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Priyanshu8494/ms-office-install-script/main/setup-$edition.ps1"
         
-        Write-Host "Executing installation..." -ForegroundColor Yellow
+        Write-Host "Executing MS Office installation for $edition..." -ForegroundColor Yellow
         $tempFile = [System.IO.Path]::GetTempFileName() + ".ps1"
         $officeScript | Out-File $tempFile
         Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$tempFile`"" -Wait
         Remove-Item $tempFile -Force
         
+        Write-Host "`n✅ MS Office $edition installed successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to continue..."
         return $true
     }
     catch {
@@ -74,8 +101,11 @@ function Install-MSOffice {
 
 function Invoke-Activation {
     try {
-        Write-Host "Starting activation process..." -ForegroundColor Yellow
+        Write-Host "Activating Windows & Office..." -ForegroundColor Yellow
         irm https://get.activated.win | iex
+        
+        Write-Host "`n✅ Activation completed successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to continue..."
         return $true
     }
     catch {
@@ -90,7 +120,7 @@ function Update-AllSoftware {
         winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
         
         Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
-        Read-Host "`nPress Enter to continue..."  # 👈 Prevents auto-closing after update
+        Read-Host "`nPress Enter to continue..."
         return $true
     }
     catch {
@@ -114,9 +144,9 @@ do {
         }
         '2' {
             if (Install-MSOffice) {
-                Show-Menu -StatusMessage "Office suite installed successfully!" -StatusColor "Green"
+                Show-Menu -StatusMessage "MS Office installed successfully!" -StatusColor "Green"
             } else {
-                Show-Menu -StatusMessage "Office installation failed. Verify repository access." -StatusColor "Red"
+                Show-Menu -StatusMessage "MS Office installation failed. Verify repository access." -StatusColor "Red"
             }
         }
         '3' {
@@ -126,3 +156,19 @@ do {
                 Show-Menu -StatusMessage "Activation process failed. Try running as administrator." -StatusColor "Red"
             }
         }
+        '4' {
+            if (Update-AllSoftware) {
+                Show-Menu -StatusMessage "All software updated successfully!" -StatusColor "Green"
+            } else {
+                Show-Menu -StatusMessage "Update failed. Ensure Winget is installed and running." -StatusColor "Red"
+            }
+        }
+        '0' { 
+            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
+            exit 
+        }
+        default {
+            Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
+        }
+    }
+} while ($true)
