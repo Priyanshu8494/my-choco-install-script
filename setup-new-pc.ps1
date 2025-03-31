@@ -85,8 +85,8 @@ function Install-MSOffice {
                 }
             }
 
-            Write-Host "`nDownloading MS Office $edition installation script..." -ForegroundColor Yellow
-            $officeScript = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Priyanshu8494/ms-office-install-script/main/setup-$edition.ps1"
+            Write-Host "`nDownloading MS Office $edition setup from GitHub..." -ForegroundColor Yellow
+            $officeScript = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/pipohernadzeze/office-24/main/setup-$edition.ps1"
             
             Write-Host "Executing MS Office installation for $edition..." -ForegroundColor Yellow
             $tempFile = [System.IO.Path]::GetTempFileName() + ".ps1"
@@ -94,4 +94,75 @@ function Install-MSOffice {
             Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$tempFile`"" -Wait
             Remove-Item $tempFile -Force
             
-            Write-Host
+            Write-Host "`n✅ MS Office $edition installed successfully!" -ForegroundColor Green
+            Read-Host "`nPress Enter to return to the menu..."
+            return $true
+
+        } while ($true)
+    }
+    catch {
+        Write-Host "Office installation failed: $_" -ForegroundColor Red
+        Read-Host "`nPress Enter to return to the menu..."
+        return $false
+    }
+}
+
+function Invoke-Activation {
+    try {
+        Write-Host "Activating Windows & Office..." -ForegroundColor Yellow
+        irm https://get.activated.win | iex
+        
+        Write-Host "`n✅ Activation completed successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to return to the menu..."
+        return $true
+    }
+    catch {
+        Write-Host "Activation failed: $_" -ForegroundColor Red
+        Read-Host "`nPress Enter to return to the menu..."
+        return $false
+    }
+}
+
+function Update-AllSoftware {
+    try {
+        Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
+        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
+        
+        Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to return to the menu..."
+        return $true
+    }
+    catch {
+        Write-Host "Update failed: $_" -ForegroundColor Red
+        Read-Host "`nPress Enter to return to the menu..."
+        return $false
+    }
+}
+
+# Main program flow
+do {
+    Show-Menu
+    $choice = Read-Host "`nEnter your choice [0-4]"
+
+    switch ($choice) {
+        '1' {
+            Install-NormalSoftware
+        }
+        '2' {
+            Install-MSOffice
+        }
+        '3' {
+            Invoke-Activation
+        }
+        '4' {
+            Update-AllSoftware
+        }
+        '0' { 
+            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
+            exit 
+        }
+        default {
+            Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
+        }
+    }
+} while ($true)
