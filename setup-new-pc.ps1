@@ -5,6 +5,25 @@
   Automated PC setup with software installation and system activation
 #>
 
+function Initialize-Chocolatey {
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+        try {
+            Write-Host "Chocolatey not found. Installing Chocolatey package manager..." -ForegroundColor Magenta
+            Set-ExecutionPolicy Bypass -Scope Process -Force -ErrorAction Stop | Out-Null
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) | Out-Null
+            # Update PATH environment variable
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            return $true
+        }
+        catch {
+            Write-Host "Failed to install Chocolatey: $_" -ForegroundColor Red
+            return $false
+        }
+    }
+    return $true
+}
+
 function Show-Header {
     Clear-Host
     Write-Host ""
@@ -35,12 +54,8 @@ function Show-Menu {
 
 function Install-NormalSoftware {
     try {
-        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-            Write-Host "Installing Chocolatey package manager..." -ForegroundColor Magenta
-            Set-ExecutionPolicy Bypass -Scope Process -Force -ErrorAction Stop | Out-Null
-            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-            iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) | Out-Null
-            RefreshEnv
+        if (-not (Initialize-Chocolatey)) {
+            return $false
         }
         
         $software = @('googlechrome', 'firefox', 'winrar', 'vlc', 'adobereader', 'anydesk', 'ultraviewer')
@@ -90,8 +105,7 @@ function Invoke-Activation {
 
 function Update-AllSoftware {
     try {
-        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-            Write-Host "Chocolatey not installed. Please install Option 1 first." -ForegroundColor Red
+        if (-not (Initialize-Chocolatey)) {
             return $false
         }
         
@@ -136,7 +150,7 @@ do {
             if (Update-AllSoftware) {
                 Show-Menu -StatusMessage "All software updated successfully!" -StatusColor "Green"
             } else {
-                Show-Menu -StatusMessage "Update failed. Make sure Chocolatey is installed (Option 1)." -StatusColor "Red"
+                Show-Menu -StatusMessage "Update failed. Please check Chocolatey installation." -StatusColor "Red"
             }
         }
         '0' { 
