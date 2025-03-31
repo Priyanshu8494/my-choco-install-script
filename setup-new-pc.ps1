@@ -9,14 +9,21 @@ function Show-Menu {
         Write-Host "`n$Message`n" -ForegroundColor Yellow
     }
     
-    Write-Host "==============================================" -ForegroundColor Cyan
-    Write-Host "                 PC SETUP [ PRIYANSHU ]               " -ForegroundColor Green
-    Write-Host "==============================================" -ForegroundColor Cyan
+    Write-Host "      _==/--" -ForegroundColor Yellow
+    Write-Host "     /##/     |\_/|     \##\" -ForegroundColor Yellow
+    Write-Host "    |####|    (o.o)    |####|" -ForegroundColor Yellow
+    Write-Host "     \##\     > ^ <     /##/" -ForegroundColor Yellow
+    Write-Host "      '--'               '--'" -ForegroundColor Yellow
+    
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "          PC SETUP [ PRIYANSHU SURYAVANSHI ]           " -ForegroundColor Green
+    Write-Host "============================================" -ForegroundColor Cyan
+    
     Write-Host "[1] Install Normal Software (Chrome, WinRAR, VLC, Firefox, Adobe Reader, AnyDesk, UltraViewer)" -ForegroundColor White
     Write-Host "[2] Install MS Office (via GitHub)" -ForegroundColor White
     Write-Host "[3] Activation Tool (Using Custom URL)" -ForegroundColor White
     Write-Host "[0] Exit" -ForegroundColor Red
-    Write-Host "==============================================" -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
     
     $choice = Read-Host "Choose an option [1,2,3,0]"
 
