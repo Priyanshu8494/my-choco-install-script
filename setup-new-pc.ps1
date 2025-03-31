@@ -5,25 +5,6 @@
   Automated PC setup with software installation and system activation
 #>
 
-function Initialize-Chocolatey {
-    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-        try {
-            Write-Host "Chocolatey not found. Installing Chocolatey package manager..." -ForegroundColor Magenta
-            Set-ExecutionPolicy Bypass -Scope Process -Force -ErrorAction Stop | Out-Null
-            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-            Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) | Out-Null
-            # Update PATH environment variable
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            return $true
-        }
-        catch {
-            Write-Host "Failed to install Chocolatey: $_" -ForegroundColor Red
-            return $false
-        }
-    }
-    return $true
-}
-
 function Show-Header {
     Clear-Host
     Write-Host ""
@@ -47,22 +28,22 @@ function Show-Menu {
     Write-Host "   (Chrome, Firefox, WinRAR, VLC, Adobe Reader, AnyDesk, UltraViewer)"
     Write-Host "2. Install MS Office Suite" -ForegroundColor White
     Write-Host "3. System Activation Toolkit" -ForegroundColor White
-    Write-Host "4. Update All Installed Software" -ForegroundColor White
+    Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
     Write-Host "0. Exit`n" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
 function Install-NormalSoftware {
     try {
-        if (-not (Initialize-Chocolatey)) {
-            return $false
-        }
+        $software = @(
+            "Google.Chrome", "Mozilla.Firefox", "RARLab.WinRAR", "VideoLAN.VLC",
+            "Adobe.Acrobat.Reader.64-bit", "AnyDeskSoftwareGmbH.AnyDesk", "UltraViewer.UltraViewer"
+        )
         
-        $software = @('googlechrome', 'firefox', 'winrar', 'vlc', 'adobereader', 'anydesk', 'ultraviewer')
         Write-Host "Installing software packages..." -ForegroundColor Yellow
         foreach ($app in $software) {
             Write-Host "  Installing $app..." -ForegroundColor Gray
-            choco install $app -y --force | Out-Null
+            winget install --id=$app --silent --accept-source-agreements --accept-package-agreements
         }
         return $true
     }
@@ -105,12 +86,8 @@ function Invoke-Activation {
 
 function Update-AllSoftware {
     try {
-        if (-not (Initialize-Chocolatey)) {
-            return $false
-        }
-        
-        Write-Host "Updating all installed software..." -ForegroundColor Yellow
-        choco upgrade all -y --ignore-checksums | Out-Null
+        Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
+        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
         Write-Host "✅ All software updated successfully!" -ForegroundColor Green
         return $true
     }
@@ -151,7 +128,7 @@ do {
             if (Update-AllSoftware) {
                 Show-Menu -StatusMessage "All software updated successfully!" -StatusColor "Green"
             } else {
-                Show-Menu -StatusMessage "Update failed. Please check Chocolatey installation." -StatusColor "Red"
+                Show-Menu -StatusMessage "Update failed. Ensure Winget is installed and running." -StatusColor "Red"
             }
         }
         '0' { 
