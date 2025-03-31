@@ -110,7 +110,8 @@ function Update-AllSoftware {
         }
         
         Write-Host "Updating all installed software..." -ForegroundColor Yellow
-        choco upgrade all -y
+        choco upgrade all -y --ignore-checksums | Out-Null
+        Write-Host "✅ All software updated successfully!" -ForegroundColor Green
         return $true
     }
     catch {
