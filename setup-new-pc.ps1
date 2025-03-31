@@ -1,7 +1,6 @@
 Clear-Host
 
 # Center the PowerShell window
-$hwnd = (Get-Process -Id $pid).MainWindowHandle
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -14,6 +13,7 @@ public class Window {
     public static extern bool SetWindowPos(IntPtr hwnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
 }
 "@
+$hwnd = (Get-Process -Id $pid).MainWindowHandle
 [Window]::SetWindowPos($hwnd, [IntPtr]::Zero, [System.Windows.Forms.Screen]::AllScreens[0].Bounds.Width / 4, [System.Windows.Forms.Screen]::AllScreens[0].Bounds.Height / 4, 0, 0, 0)
 
 function Show-Menu {
@@ -41,10 +41,10 @@ function Show-Menu {
     Write-Host "[0] Exit" -ForegroundColor Red
     Write-Host "============================================" -ForegroundColor Cyan
 
-    $Key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    $choice = $Key.Character
+    # Read the key press without requiring Enter
+    $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").Character
 
-    switch ($choice) {
+    switch ($key) {
         '1' {
             Write-Host "Installing Normal Software..." -ForegroundColor Yellow
             if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
