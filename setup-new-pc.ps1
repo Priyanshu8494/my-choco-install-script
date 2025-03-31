@@ -21,11 +21,14 @@ function Show-Menu {
         [string]$Message = ""
     )
 
+    # Suppress unwanted output
+    $null = $Message
+
     if ($Message -ne "") {
         Write-Host "`n$Message`n" -ForegroundColor Yellow
     }
 
-    # ASCII art for the top of the script (You can change to your preference)
+    # ASCII art for the top of the script
     Write-Host "=============================================" -ForegroundColor Cyan
     Write-Host "          PC SETUP [ PRIYANSHU SURYAVANSHI ]        " -ForegroundColor Green
     Write-Host "=============================================" -ForegroundColor Cyan
@@ -48,23 +51,24 @@ function Show-Menu {
             if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
                 Write-Host "Chocolatey not found. Installing Chocolatey..." -ForegroundColor Magenta
                 Set-ExecutionPolicy Bypass -Scope Process -Force
-                iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+                iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex | Out-Null
             }
-            choco install googlechrome firefox winrar vlc adobereader anydesk ultraviewer -y
+            choco install googlechrome firefox winrar vlc adobereader anydesk ultraviewer -y | Out-Null
             Show-Menu "✅ Installation complete!"
         }
         '2' {
             Write-Host "`nInstalling MS Office..." -ForegroundColor Yellow
-            powershell -ep Bypass -c "iwr 'https://raw.githubusercontent.com/Priyanshu8494/ms-office-install-script/main/setup-office.ps1' | iex"
+            powershell -ep Bypass -c "iwr 'https://raw.githubusercontent.com/Priyanshu8494/ms-office-install-script/main/setup-office.ps1' | iex" | Out-Null
             Show-Menu "✅ MS Office Installation complete!"
         }
         '3' {
             Write-Host "`nRunning Activation Tool..." -ForegroundColor Yellow
-            irm https://get.activated.win | iex
+            irm https://get.activated.win | iex | Out-Null
             Show-Menu "✅ Activation process completed!"
         }
         '0' {
-            Write-Host "`nExiting. Goodbye!" -ForegroundColor Red; exit
+            Write-Host "`nExiting. Goodbye!" -ForegroundColor Red
+            exit
         }
         default {
             Show-Menu "❌ Invalid selection. Please try again."
