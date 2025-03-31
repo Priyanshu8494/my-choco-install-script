@@ -5,9 +5,8 @@
   Automated PC setup with software installation and system activation
 #>
 
-Clear-Host
-
 function Show-Header {
+    Clear-Host
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host "            Priyanshu Suryavanshi PC Setup Toolkit          " -ForegroundColor Green
@@ -18,7 +17,6 @@ function Show-Header {
 function Show-Menu {
     param ([string]$StatusMessage = "", [string]$StatusColor = "Yellow")
     
-    Clear-Host
     Show-Header
     
     if ($StatusMessage) {
@@ -93,7 +91,7 @@ function Invoke-Activation {
 function Update-AllSoftware {
     try {
         if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-            Write-Host "Chocolatey not installed. Please install software first." -ForegroundColor Red
+            Write-Host "Chocolatey not installed. Please install Option 1 first." -ForegroundColor Red
             return $false
         }
         
@@ -138,7 +136,7 @@ do {
             if (Update-AllSoftware) {
                 Show-Menu -StatusMessage "All software updated successfully!" -StatusColor "Green"
             } else {
-                Show-Menu -StatusMessage "Update failed. Try running as administrator." -StatusColor "Red"
+                Show-Menu -StatusMessage "Update failed. Make sure Chocolatey is installed (Option 1)." -StatusColor "Red"
             }
         }
         '0' { 
