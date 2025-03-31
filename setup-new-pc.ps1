@@ -88,7 +88,9 @@ function Update-AllSoftware {
     try {
         Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
         winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
-        Write-Host "✅ All software updated successfully!" -ForegroundColor Green
+        
+        Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
+        Read-Host "`nPress Enter to continue..."  # 👈 Prevents auto-closing after update
         return $true
     }
     catch {
@@ -124,19 +126,3 @@ do {
                 Show-Menu -StatusMessage "Activation process failed. Try running as administrator." -StatusColor "Red"
             }
         }
-        '4' {
-            if (Update-AllSoftware) {
-                Show-Menu -StatusMessage "All software updated successfully!" -StatusColor "Green"
-            } else {
-                Show-Menu -StatusMessage "Update failed. Ensure Winget is installed and running." -StatusColor "Red"
-            }
-        }
-        '0' { 
-            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
-            exit 
-        }
-        default {
-            Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
-        }
-    }
-} while ($true)
