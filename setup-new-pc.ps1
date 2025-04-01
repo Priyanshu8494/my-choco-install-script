@@ -38,7 +38,7 @@ function Install-NormalSoftware {
         @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
         @{Name="WinRAR"; ID="RARLab.WinRAR"},
         @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="Adobe Reader"; ID="Adobe.Acrobat.Reader.64-bit"},
+        @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
         @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
         @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
     )
