@@ -66,15 +66,37 @@ function Install-NormalSoftware {
 }
 
 function Install-MSOffice {
-    try {
-        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
-        Write-Host "`nProceeding with default MS Office setup..." -ForegroundColor Yellow
-        Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi" -Wait
-        Write-Host "`n✅ MS Office installed successfully!" -ForegroundColor Green
+    $officeVersions = @(
+        @{Name="Office 2013"; Path="C:\Path\To\Office2013Setup.msi"},
+        @{Name="Office 2016"; Path="C:\Path\To\Office2016Setup.msi"},
+        @{Name="Office 2019"; Path="C:\Path\To\Office2019Setup.msi"},
+        @{Name="Office 2021"; Path="C:\Path\To\Office2021Setup.msi"},
+        @{Name="Office 365"; Path="C:\Path\To\Office365Setup.exe"}
+    )
+    
+    Write-Host "Select MS Office version to install:" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $officeVersions.Count; $i++) {
+        Write-Host "  $($i + 1). $($officeVersions[$i].Name)" -ForegroundColor White
     }
-    catch {
-        Write-Host "Office installation failed: $_" -ForegroundColor Red
+    
+    $selection = Read-Host "Enter selection (e.g., 1 for Office 2013)"
+    $index = $selection -as [int] - 1
+    
+    if ($index -ge 0 -and $index -lt $officeVersions.Count) {
+        $office = $officeVersions[$index]
+        Write-Host "`nInstalling $($office.Name)..." -ForegroundColor Yellow
+        
+        if ($office.Path -match "\.msi$") {
+            Start-Process "msiexec.exe" -ArgumentList "/i", "`"$($office.Path)`"", "/quiet", "/norestart" -Wait
+        } else {
+            Start-Process "`"$($office.Path)`"" -ArgumentList "/silent" -Wait
+        }
+
+        Write-Host "`n✅ $($office.Name) installed successfully!" -ForegroundColor Green
+    } else {
+        Write-Host "Invalid selection!" -ForegroundColor Red
     }
+    
     Read-Host "`nPress Enter to return to the menu..."
 }
 
