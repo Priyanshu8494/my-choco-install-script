@@ -98,7 +98,7 @@ function Uninstall-Software {
         if ($index -ge 1 -and $index -le $installedApps.Count) {
             $appName = $installedApps[$index - 1]
             Write-Host "`nUninstalling $appName..." -ForegroundColor Yellow
-            winget uninstall --id="$appName" --silent --accept-source-agreements --accept-package-agreements
+            winget uninstall --id="$appName" --silent
         } else {
             Write-Host "❌ Invalid selection: $index" -ForegroundColor Red
         }
