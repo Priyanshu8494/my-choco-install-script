@@ -3,7 +3,6 @@
   Priyanshu Suryavanshi PC Setup Toolkit
 .DESCRIPTION
   Automated PC setup with software installation and system activation
-
 .NOTES
   - Work in progress.
 #>
@@ -76,15 +75,104 @@ function Install-NormalSoftware {
 }
 
 function Install-MSOffice {
-    try {
-        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
-        Write-Host "`nProceeding with default MS Office setup..." -ForegroundColor Yellow
-        Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi" -Wait
-        Write-Host "`n✅ MS Office installed successfully!" -ForegroundColor Green
+    <#
+    .SYNOPSIS
+    Download Office 2019, 2021, 2024, and 365
+
+    .PARAMETER Branch
+    Choose Office branch: 2019, 2021, 2024, and 365
+
+    .PARAMETER Channel
+    Choose Office channel: 2019, 2021, 2024, and 365
+
+    .PARAMETER Components
+    Choose Office components: Access, OneDrive, Outlook, Word, Excel, PowerPoint, Teams, OneNote, Publisher, Project 2019/2021/2024
+
+    .EXAMPLE Download Office 2019 with the Word, Excel, PowerPoint components
+    Download.ps1 -Branch ProPlus2019Retail -Channel Current -Components Word, Excel, PowerPoint
+
+    .EXAMPLE Download Office 2021 with the Excel, Word components
+    Download.ps1 -Branch ProPlus2021Volume -Channel PerpetualVL2021 -Components Excel, Word
+
+    .EXAMPLE Download Office 2024 with the Excel, Word components
+    Download.ps1 -Branch ProPlus2024Volume -Channel PerpetualVL2024 -Components Excel, Word
+
+    .EXAMPLE Download Office 365 with the Excel, Word, PowerPoint components
+    Download.ps1 -Branch O365ProPlusRetail -Channel Current -Components Excel, OneDrive, Outlook, PowerPoint, Teams, Word
+
+    .LINK
+    https://config.office.com/deploymentsettings
+
+    .LINK
+    https://docs.microsoft.com/en-us/deployoffice/vlactivation/gvlks
+
+    .NOTES
+    Run as non-admin
+    #>
+
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("ProPlus2019Retail", "ProPlus2021Volume", "ProPlus2024Volume", "O365ProPlusRetail")]
+        [string]$Branch,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Current", "PerpetualVL2021", "PerpetualVL2024", "SemiAnnual")]
+        [string]$Channel,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Access", "OneDrive", "Outlook", "Word", "Excel", "OneNote", "Publisher", "PowerPoint", "Teams", "ProjectPro2019Volume", "ProjectPro2021Volume", "ProjectPro2024Volume")]
+        [string[]]$Components
+    )
+
+    if (-not (Test-Path -Path "$PSScriptRoot\Default.xml"))
+    {
+        Write-Warning -Message "Default.xml doesn't exist"
+        exit
     }
-    catch {
-        Write-Host "Office installation failed: $_" -ForegroundColor Red
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    if ($Host.Version.Major -eq 5)
+    {
+        $Script:ProgressPreference = "SilentlyContinue"
     }
+
+    [xml]$Config = Get-Content -Path "$PSScriptRoot\Default.xml" -Encoding Default -Force
+
+    switch ($Branch)
+    {
+        ProPlus2019Retail { ($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2019Retail" }
+        ProPlus2021Volume { ($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2021Volume" }
+        ProPlus2024Volume { ($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2024Volume" }
+        O365ProPlusRetail { ($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "O365ProPlusRetail" }
+    }
+
+    switch ($Channel)
+    {
+        Current { ($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "Current" }
+        PerpetualVL2021 { ($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "PerpetualVL2021" }
+        PerpetualVL2024 { ($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "PerpetualVL2024" }
+        SemiAnnual { ($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "SemiAnnual" }
+    }
+
+    foreach ($Component in $Components)
+    {
+        switch ($Component)
+        {
+            Access { $Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Access']"); $Node.ParentNode.RemoveChild($Node) }
+            Excel { $Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Excel']"); $Node.ParentNode.RemoveChild($Node) }
+            OneDrive { $OneDrive = Get-Package -Name "Microsoft OneDrive" -ProviderName Programs -Force -ErrorAction Ignore; if (-not $OneDrive) { Start-Process -FilePath $env:SystemRoot\SysWOW64\OneDriveSetup.exe } }
+            Outlook { $Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Outlook']"); $Node.ParentNode.RemoveChild($Node) }
+            Word { $Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Word']"); $Node.ParentNode.RemoveChild($Node) }
+            PowerPoint { $Node = $Config.SelectSingleNode("//ExcludeApp[@ID='PowerPoint']"); $Node.ParentNode.RemoveChild($Node) }
+            Teams { $Parameters = @{ Uri = "https://statics.teams.cdn.office.net/production-windows-x64/enterprise/webview2/lkg/MSTeams-x64.msix"; OutFile = "$PSScriptRoot\MSTeams-x64.msix" }; Invoke-RestMethod @Parameters }
+        }
+    }
+
+    $Config.Save("$PSScriptRoot\Config.xml")
+    Start-Process -FilePath "$PSScriptRoot\setup.exe" -ArgumentList "/download `"$PSScriptRoot\Config.xml`"" -Wait
+    Write-Host "✅ Office download completed!" -ForegroundColor Green
     Read-Host "`nPress Enter to return to the menu..."
 }
 
