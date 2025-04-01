@@ -5,7 +5,7 @@
   Automated PC setup with software installation and system activation
 
 .NOTES
-  - Work in progress: MS Office installation is currently not functioning.
+  - Work in progress.
 #>
 
 function Show-Header {
@@ -26,9 +26,7 @@ function Show-Menu {
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host "                Work in Progress Note                      " -ForegroundColor Yellow
     Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host " - Work in progress: MS Office installation is currently" -ForegroundColor White
-    Write-Host "   not functioning. Please ensure the setup path is correct" -ForegroundColor White
-    Write-Host "   and that the installer is available at 'C:\Path\To\OfficeSetup.msi'." -ForegroundColor White
+    Write-Host " - Work in progress." -ForegroundColor White
     Write-Host "============================================================" -ForegroundColor Cyan
     
     if ($StatusMessage) {
