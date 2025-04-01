@@ -4,7 +4,7 @@
 .DESCRIPTION
   Automated PC setup with software installation and system activation
 
--NOTES
+.NOTES
   - Work in progress: MS Office installation is currently not functioning. Please ensure the setup path is correct and that the installer is available at "C:\Path\To\OfficeSetup.msi" before running the script.
 #>
 
@@ -21,6 +21,15 @@ function Show-Menu {
     param ([string]$StatusMessage = "", [string]$StatusColor = "Yellow")
     
     Show-Header
+    
+    # Display the .NOTES section here
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "                Work in Progress Note                      " -ForegroundColor Yellow
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host " - Work in progress: MS Office installation is currently" -ForegroundColor White
+    Write-Host "   not functioning. Please ensure the setup path is correct" -ForegroundColor White
+    Write-Host "   and that the installer is available at 'C:\Path\To\OfficeSetup.msi'." -ForegroundColor White
+    Write-Host "============================================================" -ForegroundColor Cyan
     
     if ($StatusMessage) {
         Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
