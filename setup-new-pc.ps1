@@ -32,39 +32,6 @@ function Show-Menu {
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
-function Install-NormalSoftware {
-    $softwareList = @(
-        @{Name="Google Chrome"; ID="Google.Chrome"},
-        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
-        @{Name="WinRAR"; ID="RARLab.WinRAR"},
-        @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="Wondershare PDF"; ID="pdf.wondershare.net"},
-        @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
-        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
-    )
-    
-    Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $softwareList.Count; $i++) {
-        Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
-    }
-    
-    $selection = Read-Host "Enter selection (e.g., 1,3,5)"
-    $selectedIndices = $selection -split "," | ForEach-Object {$_ -as [int]}
-    
-    foreach ($index in $selectedIndices) {
-        if ($index -ge 1 -and $index -le $softwareList.Count) {
-            $app = $softwareList[$index - 1]
-            Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements
-        } else {
-            Write-Host "  Invalid selection: $index" -ForegroundColor Red
-        }
-    }
-    
-    Write-Host "`n✅ Selected software installed successfully!" -ForegroundColor Green
-    Read-Host "`nPress Enter to return to the menu..."
-}
-
 function Install-MSOffice {
     $officeVersions = @(
         @{Name="Office 2013"; Path="C:\Path\To\Office2013Setup.msi"},
@@ -74,53 +41,38 @@ function Install-MSOffice {
         @{Name="Office 365"; Path="C:\Path\To\Office365Setup.exe"}
     )
     
-    Write-Host "Select MS Office version to install:" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $officeVersions.Count; $i++) {
-        Write-Host "  $($i + 1). $($officeVersions[$i].Name)" -ForegroundColor White
-    }
-    
-    $selection = Read-Host "Enter selection (e.g., 1 for Office 2013)"
-    $index = $selection -as [int] - 1
-    
-    if ($index -ge 0 -and $index -lt $officeVersions.Count) {
-        $office = $officeVersions[$index]
-        Write-Host "`nInstalling $($office.Name)..." -ForegroundColor Yellow
-        
-        if ($office.Path -match "\.msi$") {
-            Start-Process "msiexec.exe" -ArgumentList "/i", "`"$($office.Path)`"", "/quiet", "/norestart" -Wait
-        } else {
-            Start-Process "`"$($office.Path)`"" -ArgumentList "/silent" -Wait
+    do {
+        Write-Host "Select MS Office version to install:" -ForegroundColor Yellow
+        for ($i = 0; $i -lt $officeVersions.Count; $i++) {
+            Write-Host "  $($i + 1). $($officeVersions[$i].Name)" -ForegroundColor White
         }
 
-        Write-Host "`n✅ $($office.Name) installed successfully!" -ForegroundColor Green
-    } else {
-        Write-Host "Invalid selection!" -ForegroundColor Red
-    }
-    
-    Read-Host "`nPress Enter to return to the menu..."
-}
+        $selection = Read-Host "Enter selection (1-5)"
+        
+        # Ensure the input is a valid number
+        if ($selection -match "^\d+$") {
+            $index = [int]$selection - 1
+        } else {
+            $index = -1
+        }
 
-function Invoke-Activation {
-    try {
-        Write-Host "Activating Windows & Office..." -ForegroundColor Yellow
-        irm https://get.activated.win | iex
-        Write-Host "`n✅ Activation completed successfully!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Activation failed: $_" -ForegroundColor Red
-    }
-    Read-Host "`nPress Enter to return to the menu..."
-}
+        if ($index -ge 0 -and $index -lt $officeVersions.Count) {
+            $office = $officeVersions[$index]
+            Write-Host "`nInstalling $($office.Name)..." -ForegroundColor Yellow
+            
+            if ($office.Path -match "\.msi$") {
+                Start-Process "msiexec.exe" -ArgumentList "/i", "`"$($office.Path)`"", "/quiet", "/norestart" -Wait
+            } else {
+                Start-Process "`"$($office.Path)`"" -ArgumentList "/silent" -Wait
+            }
 
-function Update-AllSoftware {
-    try {
-        Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
-        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
-        Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Update failed: $_" -ForegroundColor Red
-    }
+            Write-Host "`n✅ $($office.Name) installed successfully!" -ForegroundColor Green
+            break
+        } else {
+            Write-Host "❌ Invalid selection! Please enter a number between 1-5." -ForegroundColor Red
+        }
+    } while ($true)
+
     Read-Host "`nPress Enter to return to the menu..."
 }
 
@@ -130,17 +82,8 @@ do {
     $choice = Read-Host "`nEnter your choice [0-4]"
 
     switch ($choice) {
-        '1' {
-            Install-NormalSoftware
-        }
         '2' {
             Install-MSOffice
-        }
-        '3' {
-            Invoke-Activation
-        }
-        '4' {
-            Update-AllSoftware
         }
         '0' { 
             Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
