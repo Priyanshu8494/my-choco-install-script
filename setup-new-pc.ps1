@@ -98,7 +98,29 @@ function Uninstall-Software {
         if ($index -ge 1 -and $index -le $installedApps.Count) {
             $appName = $installedApps[$index - 1]
             Write-Host "`nUninstalling $appName..." -ForegroundColor Yellow
-            winget uninstall --id="$appName" --silent
+            $uninstallResult = winget uninstall --id="$appName" --silent
+
+            # Check if winget uninstall was successful
+            if ($uninstallResult -match "Successfully uninstalled") {
+                Write-Host "`n✅ $appName was uninstalled successfully!" -ForegroundColor Green
+            } else {
+                Write-Host "`n❌ Failed to uninstall $appName using winget. Trying fallback methods..." -ForegroundColor Red
+                
+                # Fallback uninstallation using registry
+                $uninstallKey = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
+                if ($uninstallKey) {
+                    $uninstallCmd = $uninstallKey.UninstallString
+                    if ($uninstallCmd) {
+                        Write-Host "Running fallback uninstaller: $uninstallCmd" -ForegroundColor Yellow
+                        Start-Process $uninstallCmd -ArgumentList "/quiet", "/norestart" -Wait
+                        Write-Host "`n✅ $appName was uninstalled successfully via fallback method!" -ForegroundColor Green
+                    } else {
+                        Write-Host "`n❌ Unable to find uninstaller command for $appName." -ForegroundColor Red
+                    }
+                } else {
+                    Write-Host "`n❌ Unable to find the application in the registry." -ForegroundColor Red
+                }
+            }
         } else {
             Write-Host "❌ Invalid selection: $index" -ForegroundColor Red
         }
