@@ -20,15 +20,15 @@ function Show-Menu {
     Show-Header
     
     if ($StatusMessage) {
-        Write-Host "[STATUS] $StatusMessage`n" -ForegroundColor $StatusColor
+        Write-Host "[STATUS] $StatusMessagen" -ForegroundColor $StatusColor
     }
 
-    Write-Host "Main Menu Options:`n" -ForegroundColor Green
+    Write-Host "Main Menu Options:n" -ForegroundColor Green
     Write-Host "1. Install Essential Software" -ForegroundColor White
     Write-Host "2. Install MS Office Suite" -ForegroundColor White
     Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
     Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
-    Write-Host "0. Exit`n" -ForegroundColor Red
+    Write-Host "0. Exitn" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
@@ -58,28 +58,28 @@ function Install-MSOffice {
 
         if ($index -ge 0 -and $index -lt $officeVersions.Count) {
             $office = $officeVersions[$index]
-            Write-Host "`nInstalling $($office.Name)..." -ForegroundColor Yellow
+            Write-Host "nInstalling $($office.Name)..." -ForegroundColor Yellow
             
             if ($office.Path -match "\.msi$") {
-                Start-Process "msiexec.exe" -ArgumentList "/i", "`"$($office.Path)`"", "/quiet", "/norestart" -Wait
+                Start-Process "msiexec.exe" -ArgumentList "/i", ""$($office.Path)"", "/quiet", "/norestart" -Wait
             } else {
-                Start-Process "`"$($office.Path)`"" -ArgumentList "/silent" -Wait
+                Start-Process ""$($office.Path)"" -ArgumentList "/silent" -Wait
             }
 
-            Write-Host "`n✅ $($office.Name) installed successfully!" -ForegroundColor Green
+            Write-Host "n✅ $($office.Name) installed successfully!" -ForegroundColor Green
             break
         } else {
             Write-Host "❌ Invalid selection! Please enter a number between 1-5." -ForegroundColor Red
         }
     } while ($true)
 
-    Read-Host "`nPress Enter to return to the menu..."
+    Read-Host "nPress Enter to return to the menu..."
 }
 
 # Main program flow
 do {
     Show-Menu
-    $choice = Read-Host "`nEnter your choice [0-4]"
+    $choice = Read-Host "nEnter your choice [0-4]"
 
     switch ($choice) {
         '2' {
