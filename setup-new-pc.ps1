@@ -20,15 +20,15 @@ function Show-Menu {
     Show-Header
     
     if ($StatusMessage) {
-        Write-Host "[STATUS] $StatusMessagen" -ForegroundColor $StatusColor
+        Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
     }
 
-    Write-Host "Main Menu Options:n" -ForegroundColor Green
+    Write-Host "Main Menu Options:" -ForegroundColor Green
     Write-Host "1. Install Essential Software" -ForegroundColor White
     Write-Host "2. Install MS Office Suite" -ForegroundColor White
     Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
     Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
-    Write-Host "0. Exitn" -ForegroundColor Red
+    Write-Host "0. Exit" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
@@ -61,51 +61,51 @@ function Install-NormalSoftware {
         }
     }
     
-    Write-Host "n✅ Selected software installed successfully!" -ForegroundColor Green
-    Read-Host "nPress Enter to return to the menu..."
+    Write-Host "`n✅ Selected software installed successfully!" -ForegroundColor Green
+    Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Install-MSOffice {
     try {
-        Write-Host "nDownloading MS Office setup..." -ForegroundColor Yellow
-        Write-Host "nProceeding with default MS Office setup..." -ForegroundColor Yellow
+        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
+        Write-Host "`nProceeding with default MS Office setup..." -ForegroundColor Yellow
         Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi" -Wait
-        Write-Host "n✅ MS Office installed successfully!" -ForegroundColor Green
+        Write-Host "`n✅ MS Office installed successfully!" -ForegroundColor Green
     }
     catch {
         Write-Host "Office installation failed: $_" -ForegroundColor Red
     }
-    Read-Host "nPress Enter to return to the menu..."
+    Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Invoke-Activation {
     try {
         Write-Host "Activating Windows & Office..." -ForegroundColor Yellow
         irm https://get.activated.win | iex
-        Write-Host "n✅ Activation completed successfully!" -ForegroundColor Green
+        Write-Host "`n✅ Activation completed successfully!" -ForegroundColor Green
     }
     catch {
         Write-Host "Activation failed: $_" -ForegroundColor Red
     }
-    Read-Host "nPress Enter to return to the menu..."
+    Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Update-AllSoftware {
     try {
         Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
         winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
-        Write-Host "n✅ All software updated successfully!" -ForegroundColor Green
+        Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
     }
     catch {
         Write-Host "Update failed: $_" -ForegroundColor Red
     }
-    Read-Host "nPress Enter to return to the menu..."
+    Read-Host "`nPress Enter to return to the menu..."
 }
 
 # Main program flow
 do {
     Show-Menu
-    $choice = Read-Host "nEnter your choice [0-4]"
+    $choice = Read-Host "`nEnter your choice [0-4]"
 
     switch ($choice) {
         '1' {
