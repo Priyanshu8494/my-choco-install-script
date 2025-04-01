@@ -106,8 +106,13 @@ function Uninstall-Software {
             } else {
                 Write-Host "`n❌ Failed to uninstall $appName using winget. Trying fallback methods..." -ForegroundColor Red
                 
-                # Fallback uninstallation using registry
-                $uninstallKey = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
+                # Fallback uninstallation using registry (32-bit and 64-bit paths)
+                $uninstallKey32 = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
+                $uninstallKey64 = Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
+
+                # Check both 32-bit and 64-bit registry paths
+                $uninstallKey = $uninstallKey32 ? $uninstallKey32 : $uninstallKey64
+
                 if ($uninstallKey) {
                     $uninstallCmd = $uninstallKey.UninstallString
                     if ($uninstallCmd) {
