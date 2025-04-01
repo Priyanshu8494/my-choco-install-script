@@ -3,6 +3,9 @@
   Priyanshu Suryavanshi PC Setup Toolkit
 .DESCRIPTION
   Automated PC setup with software installation and system activation
+
+.NOTES
+  - Work in progress: MS Office installation is currently not functioning. Please ensure the setup path is correct and that the installer is available at "C:\Path\To\OfficeSetup.msi" before running the script.
 #>
 
 function Show-Header {
