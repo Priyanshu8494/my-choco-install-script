@@ -110,17 +110,23 @@ function Uninstall-Software {
                 $uninstallKey32 = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
                 $uninstallKey64 = Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq $appName }
 
-                # Check both 32-bit and 64-bit registry paths
-                $uninstallKey = $uninstallKey32 ? $uninstallKey32 : $uninstallKey64
-
-                if ($uninstallKey) {
-                    $uninstallCmd = $uninstallKey.UninstallString
+                if ($uninstallKey32) {
+                    $uninstallCmd = $uninstallKey32.UninstallString
                     if ($uninstallCmd) {
-                        Write-Host "Running fallback uninstaller: $uninstallCmd" -ForegroundColor Yellow
+                        Write-Host "Running fallback uninstaller (32-bit): $uninstallCmd" -ForegroundColor Yellow
                         Start-Process $uninstallCmd -ArgumentList "/quiet", "/norestart" -Wait
-                        Write-Host "`n✅ $appName was uninstalled successfully via fallback method!" -ForegroundColor Green
+                        Write-Host "`n✅ $appName was uninstalled successfully via fallback method (32-bit)!" -ForegroundColor Green
                     } else {
-                        Write-Host "`n❌ Unable to find uninstaller command for $appName." -ForegroundColor Red
+                        Write-Host "`n❌ Unable to find uninstaller command for $appName (32-bit)." -ForegroundColor Red
+                    }
+                } elseif ($uninstallKey64) {
+                    $uninstallCmd = $uninstallKey64.UninstallString
+                    if ($uninstallCmd) {
+                        Write-Host "Running fallback uninstaller (64-bit): $uninstallCmd" -ForegroundColor Yellow
+                        Start-Process $uninstallCmd -ArgumentList "/quiet", "/norestart" -Wait
+                        Write-Host "`n✅ $appName was uninstalled successfully via fallback method (64-bit)!" -ForegroundColor Green
+                    } else {
+                        Write-Host "`n❌ Unable to find uninstaller command for $appName (64-bit)." -ForegroundColor Red
                     }
                 } else {
                     Write-Host "`n❌ Unable to find the application in the registry." -ForegroundColor Red
