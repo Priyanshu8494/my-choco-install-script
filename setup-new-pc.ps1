@@ -3,7 +3,6 @@
   Priyanshu Suryavanshi PC Setup Toolkit
 .DESCRIPTION
   Automated PC setup with software installation and system activation
-
 .NOTES
   - Work in progress.
 #>
@@ -16,7 +15,6 @@ function Ensure-PackageManagers {
         Read-Host "Press Enter to exit..."
         exit
     }
-
     # Ensure Chocolatey is installed
     if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
         Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
@@ -37,22 +35,18 @@ function Show-Header {
 
 function Show-Menu {
     param (
-        [string]$StatusMessage = "", 
+        [string]$StatusMessage = "",
         [string]$StatusColor = "Yellow"
     )
-    
     Show-Header
-
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host "                    Work in Progress                       " -ForegroundColor Yellow
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host " - Work in progress." -ForegroundColor White
     Write-Host "============================================================" -ForegroundColor Cyan
-
     if ($StatusMessage) {
         Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
     }
-
     Write-Host ""
     Write-Host " Main Menu Options: " -ForegroundColor Green
     Write-Host " ====================" -ForegroundColor Green
@@ -67,7 +61,6 @@ function Show-Menu {
 
 function Install-NormalSoftware {
     Ensure-PackageManagers
-    
     $softwareList = @(
         @{Name="Google Chrome"; ID="Google.Chrome"},
         @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
@@ -77,60 +70,78 @@ function Install-NormalSoftware {
         @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
         @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
     )
-
     Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
     for ($i = 0; $i -lt $softwareList.Count; $i++) {
         Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
     }
-    
     $selection = Read-Host "Enter selection (e.g., 1,3,5)"
     $selectedIndices = $selection -split "," | ForEach-Object {$_ -as [int]}
-    
     foreach ($index in $selectedIndices) {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            
             Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-            
             if ($?) {
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
+                Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Successfully installed $($app.Name)"
             } else {
                 Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
+                Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to install $($app.Name)"
             }
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
         }
     }
-
     Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Install-MSOffice {
     Write-Host "Installing Microsoft Office..." -ForegroundColor Yellow
-    # Add the actual Office installation logic here
+    # Placeholder for actual Office installation logic
+    # Example: Start-Process -FilePath "setup.exe" -ArgumentList "/quiet /norestart" -Wait -NoNewWindow
+    Write-Host "Microsoft Office installation is a placeholder. Please add your own installation logic." -ForegroundColor Yellow
     Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Invoke-Activation {
     Write-Host "Running System Activation Toolkit..." -ForegroundColor Yellow
-    # Add activation command logic here
+    # Activate Windows
+    Write-Host "Activating Windows..." -ForegroundColor Gray
+    slmgr.vbs /ato
+    if ($?) {
+        Write-Host "✅ Windows activated successfully!" -ForegroundColor Green
+        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Windows activated successfully"
+    } else {
+        Write-Host "❌ Failed to activate Windows." -ForegroundColor Red
+        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to activate Windows"
+    }
+
+    # Activate Office
+    Write-Host "Activating Microsoft Office..." -ForegroundColor Gray
+    # Placeholder for actual Office activation logic
+    # Example: ospp.vbs /act
+    Write-Host "Microsoft Office activation is a placeholder. Please add your own activation logic." -ForegroundColor Yellow
     Read-Host "`nPress Enter to return to the menu..."
 }
 
 function Update-AllSoftware {
     Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
     Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+    if ($?) {
+        Write-Host "✅ All software updated successfully!" -ForegroundColor Green
+        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "All software updated successfully"
+    } else {
+        Write-Host "❌ Failed to update all software." -ForegroundColor Red
+        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to update all software"
+    }
     Read-Host "`nPress Enter to return to the menu..."
 }
 
 # Main program flow
 Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
-
 do {
     Show-Menu
     $choice = Read-Host "`nEnter your choice [0-4]"
-
     switch ($choice) {
         '1' {
             Install-NormalSoftware
@@ -144,9 +155,9 @@ do {
         '4' {
             Update-AllSoftware
         }
-        '0' { 
+        '0' {
             Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
-            exit 
+            exit
         }
         default {
             Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
