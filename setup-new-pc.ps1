@@ -6,7 +6,7 @@
 
 .NOTES
   - Requires Scoop to be installed
-  - Run as Administrator
+  - Run in a PowerShell session without administrator privileges
 #>
 
 function Show-Header {
@@ -26,9 +26,9 @@ function Install-Scoop {
             return $true
         }
 
-        Write-Host "Installing Scoop..." -ForegroundColor Yellow
+        Write-Host "Installing Scoop (User Mode)..." -ForegroundColor Yellow
         Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-        iwr -useb get.scoop.sh | iex
+        Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
         
         if (Get-Command scoop -ErrorAction SilentlyContinue) {
             Write-Host "✅ Scoop installed successfully!" -ForegroundColor Green
@@ -134,12 +134,6 @@ function Update-AllSoftware {
 
 # Main program flow
 try {
-    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Host "Please run this script as Administrator" -ForegroundColor Red
-        Pause
-        exit
-    }
-
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Install-Scoop
     }
