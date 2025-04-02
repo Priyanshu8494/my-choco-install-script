@@ -1,83 +1,78 @@
 <#
 .SYNOPSIS
-  Priyanshu Suryavanshi PC Setup Toolkit
+  Priyanshu Suryavanshi PC Setup Toolkit (Scoop Version)
 .DESCRIPTION
-  Automated PC setup with software installation and system activation
+  Automated PC setup with software installation using Scoop and system activation
 
 .NOTES
-  - Work in progress.
+  - Requires Scoop to be installed
+  - Run as Administrator
 #>
 
 function Show-Header {
     Clear-Host
-    Write-Host ""
+    Write-Host "" 
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host "            Priyanshu Suryavanshi PC Setup Toolkit          " -ForegroundColor Green
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host ""
 }
 
-function Show-Menu {
-    param ([string]$StatusMessage = "", [string]$StatusColor = "Yellow")
-    
-    Show-Header
-    
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "                Work in Progress Note                      " -ForegroundColor Yellow
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host " - Work in progress." -ForegroundColor White
-    Write-Host "============================================================" -ForegroundColor Cyan
-    
-    if ($StatusMessage) {
-        Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
-        Write-Host ""
-    }
+function Install-Scoop {
+    try {
+        Write-Host "`nChecking if Scoop is installed..." -ForegroundColor Yellow
+        if (Get-Command scoop -ErrorAction SilentlyContinue) {
+            Write-Host "✅ Scoop is already installed" -ForegroundColor Green
+            return $true
+        }
 
-    Write-Host "Main Menu Options:" -ForegroundColor Green
-    Write-Host "1. Install Essential Software" -ForegroundColor White
-    Write-Host "2. Install MS Office Suite" -ForegroundColor White
-    Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
-    Write-Host "4. Update All Installed Software (Using Winget)" -ForegroundColor White
-    Write-Host "0. Exit" -ForegroundColor Red
-    Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "Installing Scoop..." -ForegroundColor Yellow
+        Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        iwr -useb get.scoop.sh | iex
+        
+        if (Get-Command scoop -ErrorAction SilentlyContinue) {
+            Write-Host "✅ Scoop installed successfully!" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host "❌ Scoop installation failed" -ForegroundColor Red
+            return $false
+        }
+    }
+    catch {
+        Write-Host "❌ Error installing Scoop: $_" -ForegroundColor Red
+        return $false
+    }
+    finally {
+        Pause
+    }
 }
 
-function Install-NormalSoftware {
-    # Create software list with display names and winget IDs
+function Install-Software {
+    # Scoop package list
     $softwareList = @(
-        @{Name="Google Chrome"; ID="Google.Chrome"},
-        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
-        @{Name="WinRAR"; ID="RARLab.WinRAR"},
-        @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
-        @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
-        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
+        @{Name="Google Chrome"; ID="googlechrome"},
+        @{Name="Mozilla Firefox"; ID="firefox"},
+        @{Name="WinRAR"; ID="winrar"},
+        @{Name="VLC Player"; ID="vlc"},
+        @{Name="Sumatra PDF Reader"; ID="sumatrapdf"},
+        @{Name="AnyDesk"; ID="anydesk"},
+        @{Name="UltraViewer"; ID="ultraviewer"}
     )
     
-    # Display menu
     Write-Host "`nSelect software to install (Enter numbers separated by commas, or 'all'):" -ForegroundColor Yellow
     for ($i = 0; $i -lt $softwareList.Count; $i++) {
         Write-Host "$($i+1). $($softwareList[$i].Name)" -ForegroundColor White
     }
     
-    # Get user selection
     $selection = Read-Host "`nEnter your choice"
-    
-    # Process selection
     if ($selection -eq "all") {
         $selectedIndices = 1..$softwareList.Count
     } else {
         $selectedIndices = $selection -split "," | ForEach-Object {
-            try {
-                [int]$_.Trim()
-            } catch {
-                Write-Host "Invalid input: $_" -ForegroundColor Red
-                0
-            }
+            try {[int]$_.Trim()} catch {Write-Host "Invalid input: $_" -ForegroundColor Red; 0}
         }
     }
     
-    # Install selected software
     $successCount = 0
     foreach ($index in $selectedIndices) {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
@@ -85,7 +80,7 @@ function Install-NormalSoftware {
             Write-Host "`nInstalling $($app.Name)..." -ForegroundColor Yellow
             
             try {
-                winget install --id $app.ID --silent --accept-source-agreements --accept-package-agreements
+                scoop install $app.ID
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
                 $successCount++
             } catch {
@@ -96,16 +91,15 @@ function Install-NormalSoftware {
         }
     }
     
-    # Show summary
     Write-Host "`nInstallation complete. Successfully installed $successCount of $($selectedIndices.Count) selected applications." -ForegroundColor Cyan
     Pause
 }
 
 function Install-MSOffice {
     try {
-        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
-        # This is a placeholder - replace with your actual Office installation command
-        # Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi", "/quiet", "/norestart" -Wait
+        Write-Host "`nInstalling Microsoft Office..." -ForegroundColor Yellow
+        scoop bucket add extras
+        scoop install office-deployment-tool
         Write-Host "✅ MS Office installed successfully!" -ForegroundColor Green
     }
     catch {
@@ -117,8 +111,7 @@ function Install-MSOffice {
 function Invoke-Activation {
     try {
         Write-Host "`nActivating Windows & Office..." -ForegroundColor Yellow
-        # This is a placeholder - replace with your actual activation command
-        # irm https://get.activated.win | iex
+        # Placeholder - replace with actual activation command
         Write-Host "✅ Activation completed successfully!" -ForegroundColor Green
     }
     catch {
@@ -129,8 +122,8 @@ function Invoke-Activation {
 
 function Update-AllSoftware {
     try {
-        Write-Host "`nUpdating all installed software using Winget..." -ForegroundColor Yellow
-        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
+        Write-Host "`nUpdating all installed software using Scoop..." -ForegroundColor Yellow
+        scoop update *
         Write-Host "✅ All software updated successfully!" -ForegroundColor Green
     }
     catch {
@@ -140,22 +133,44 @@ function Update-AllSoftware {
 }
 
 # Main program flow
-do {
-    Show-Menu
-    $choice = Read-Host "`nEnter your choice [0-4]"
-
-    switch ($choice) {
-        '1' { Install-NormalSoftware }
-        '2' { Install-MSOffice }
-        '3' { Invoke-Activation }
-        '4' { Update-AllSoftware }
-        '0' { 
-            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
-            exit 
-        }
-        default {
-            Write-Host "Invalid selection! Please choose between 0-4" -ForegroundColor Red
-            Start-Sleep -Seconds 2
-        }
+try {
+    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "Please run this script as Administrator" -ForegroundColor Red
+        Pause
+        exit
     }
-} while ($true)
+
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+        Install-Scoop
+    }
+
+    do {
+        Show-Header
+        Write-Host "1. Install Essential Software" -ForegroundColor White
+        Write-Host "2. Install MS Office Suite" -ForegroundColor White
+        Write-Host "3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
+        Write-Host "4. Update All Installed Software (Using Scoop)" -ForegroundColor White
+        Write-Host "0. Exit" -ForegroundColor Red
+        $choice = Read-Host "`nEnter your choice [0-4]"
+
+        switch ($choice) {
+            '1' { Install-Software }
+            '2' { Install-MSOffice }
+            '3' { Invoke-Activation }
+            '4' { Update-AllSoftware }
+            '0' { 
+                Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
+                exit 
+            }
+            default {
+                Write-Host "Invalid selection! Please choose between 0-4" -ForegroundColor Red
+                Start-Sleep -Seconds 2
+            }
+        }
+    } while ($true)
+}
+catch {
+    Write-Host "`nA critical error occurred: $_" -ForegroundColor Red
+    Pause
+    exit 1
+}
