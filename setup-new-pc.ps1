@@ -91,7 +91,7 @@ function Install-NormalSoftware {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
             
-            winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements
+            Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
             
             if ($?) {
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
