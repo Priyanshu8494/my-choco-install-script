@@ -1,23 +1,25 @@
-@echo off
-echo Installing software using Chocolatey...
+# Install software using Chocolatey
 
-:: Check if Chocolatey is installed
-if not exist "C:\ProgramData\Chocolatey" (
-    echo Chocolatey is not installed. Installing now...
-    @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;C:\ProgramData\Chocolatey\bin"
-)
+# Check if Chocolatey is installed
+if (-not (Test-Path "C:\ProgramData\Chocolatey")) {
+    Write-Host "Chocolatey is not installed. Installing now..."
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+}
 
-:: Install WinRAR
+# Install WinRAR
+Write-Host "Installing WinRAR..."
 choco install winrar -y
 
-:: Install Google Chrome
+# Install Google Chrome
+Write-Host "Installing Google Chrome..."
 choco install googlechrome -y
 
-:: Install Firefox
+# Install Firefox
+Write-Host "Installing Firefox..."
 choco install firefox -y
 
-:: Install VLC
+# Install VLC
+Write-Host "Installing VLC..."
 choco install vlc -y
 
-echo Software installation completed.
-pause
+Write-Host "Software installation completed."
