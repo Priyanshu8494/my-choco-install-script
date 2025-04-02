@@ -8,6 +8,23 @@
   - Work in progress.
 #>
 
+function Ensure-PackageManagers {
+    # Ensure Winget is installed
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Host "Winget is not installed. Installing now..." -ForegroundColor Yellow
+        Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile "winget.msixbundle"
+        Add-AppxPackage -Path "winget.msixbundle"
+        Remove-Item "winget.msixbundle"
+    }
+
+    # Ensure Chocolatey is installed
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+        Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    }
+}
+
 function Show-Header {
     Clear-Host
     Write-Host ""
@@ -25,7 +42,6 @@ function Show-Menu {
     
     Show-Header
 
-    # Display the .NOTES section here
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host "                    Work in Progress                       " -ForegroundColor Yellow
     Write-Host "============================================================" -ForegroundColor Cyan
@@ -49,6 +65,8 @@ function Show-Menu {
 }
 
 function Install-NormalSoftware {
+    Ensure-PackageManagers
+    
     $softwareList = @(
         @{Name="Google Chrome"; ID="Google.Chrome"},
         @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
@@ -71,7 +89,7 @@ function Install-NormalSoftware {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements
+            Start-Process -NoNewWindow -Wait -FilePath "winget" -ArgumentList "install --id `"$($app.ID)`" --silent --accept-source-agreements --accept-package-agreements"
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
         }
@@ -81,44 +99,9 @@ function Install-NormalSoftware {
     Read-Host "`nPress Enter to return to the menu..."
 }
 
-function Install-MSOffice {
-    try {
-        Write-Host "`nDownloading MS Office setup..." -ForegroundColor Yellow
-        Write-Host "`nProceeding with default MS Office setup..." -ForegroundColor Yellow
-        Start-Process "msiexec.exe" -ArgumentList "/i", "C:\Path\To\OfficeSetup.msi" -Wait
-        Write-Host "`n✅ MS Office installed successfully!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Office installation failed: $_" -ForegroundColor Red
-    }
-    Read-Host "`nPress Enter to return to the menu..."
-}
-
-function Invoke-Activation {
-    try {
-        Write-Host "Activating Windows & Office..." -ForegroundColor Yellow
-        irm https://get.activated.win | iex
-        Write-Host "`n✅ Activation completed successfully!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Activation failed: $_" -ForegroundColor Red
-    }
-    Read-Host "`nPress Enter to return to the menu..."
-}
-
-function Update-AllSoftware {
-    try {
-        Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
-        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
-        Write-Host "`n✅ All software updated successfully!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Update failed: $_" -ForegroundColor Red
-    }
-    Read-Host "`nPress Enter to return to the menu..."
-}
-
 # Main program flow
+Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
+
 do {
     Show-Menu
     $choice = Read-Host "`nEnter your choice [0-4]"
