@@ -99,13 +99,13 @@ function Invoke-Activation {
 
     # Activate Windows
     Write-Host "Activating Windows..." -ForegroundColor Gray
-    Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
-    if ($?) {
+    try {
+        Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
         Write-Host "✅ Windows activated successfully!" -ForegroundColor Green
         Add-LogEntry "Windows activated successfully"
-    } else {
-        Write-Host "❌ Failed to activate Windows." -ForegroundColor Red
-        Add-LogEntry "Failed to activate Windows"
+    } catch {
+        Write-Host "❌ Failed to activate Windows. Error: $_" -ForegroundColor Red
+        Add-LogEntry "Failed to activate Windows. Error: $_"
     }
 
     # Activate Office
@@ -118,13 +118,13 @@ function Invoke-Activation {
 
 function Update-AllSoftware {
     Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
-    Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-    if ($?) {
+    try {
+        Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
         Write-Host "✅ All software updated successfully!" -ForegroundColor Green
         Add-LogEntry "All software updated successfully"
-    } else {
-        Write-Host "❌ Failed to update all software." -ForegroundColor Red
-        Add-LogEntry "Failed to update all software"
+    } catch {
+        Write-Host "❌ Failed to update all software. Error: $_" -ForegroundColor Red
+        Add-LogEntry "Failed to update all software. Error: $_"
     }
     Read-Host "`nPress Enter to return to the menu..."
 }
