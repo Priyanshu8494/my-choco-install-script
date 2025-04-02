@@ -9,12 +9,12 @@
 #>
 
 function Ensure-PackageManagers {
-    # Ensure Winget is installed
+    # Ensure Winget is installed and available
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "Winget is not installed. Installing now..." -ForegroundColor Yellow
-        Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile "winget.msixbundle"
-        Add-AppxPackage -Path "winget.msixbundle"
-        Remove-Item "winget.msixbundle"
+        Write-Host "❌ Winget is not installed or not working properly!" -ForegroundColor Red
+        Write-Host "Please manually install Winget from: https://aka.ms/getwinget" -ForegroundColor Yellow
+        Read-Host "Press Enter to exit..."
+        exit
     }
 
     # Ensure Chocolatey is installed
@@ -89,8 +89,9 @@ function Install-NormalSoftware {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            $command = "winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements"
-            Invoke-Expression $command
+            
+            Start-Process -FilePath "winget" -ArgumentList "install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+            
             if ($?) {
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
             } else {
