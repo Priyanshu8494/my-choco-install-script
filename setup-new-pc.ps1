@@ -89,13 +89,18 @@ function Install-NormalSoftware {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            Start-Process -NoNewWindow -Wait -FilePath "winget" -ArgumentList "install --id `"$($app.ID)`" --silent --accept-source-agreements --accept-package-agreements"
+            $command = "winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements"
+            Invoke-Expression $command
+            if ($?) {
+                Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
+            } else {
+                Write-Host "❌ Failed to install $($app.Name)" -ForegroundColor Red
+            }
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
         }
     }
 
-    Write-Host "`n✅ Selected software installed successfully!" -ForegroundColor Green
     Read-Host "`nPress Enter to return to the menu..."
 }
 
