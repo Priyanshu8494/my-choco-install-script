@@ -105,9 +105,10 @@ function Install-MSOffice {
 
 function Invoke-Activation {
     Write-Host "Running System Activation Toolkit..." -ForegroundColor Yellow
+
     # Activate Windows
     Write-Host "Activating Windows..." -ForegroundColor Gray
-    slmgr.vbs /ato
+    Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
     if ($?) {
         Write-Host "✅ Windows activated successfully!" -ForegroundColor Green
         Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Windows activated successfully"
