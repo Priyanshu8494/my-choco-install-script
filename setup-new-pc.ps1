@@ -83,10 +83,10 @@ function Install-NormalSoftware {
             Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
             if ($?) {
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
-                Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Successfully installed $($app.Name)"
+                Add-LogEntry "Successfully installed $($app.Name)"
             } else {
                 Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
-                Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to install $($app.Name)"
+                Add-LogEntry "Failed to install $($app.Name)"
             }
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
@@ -111,10 +111,10 @@ function Invoke-Activation {
     Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
     if ($?) {
         Write-Host "✅ Windows activated successfully!" -ForegroundColor Green
-        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Windows activated successfully"
+        Add-LogEntry "Windows activated successfully"
     } else {
         Write-Host "❌ Failed to activate Windows." -ForegroundColor Red
-        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to activate Windows"
+        Add-LogEntry "Failed to activate Windows"
     }
 
     # Activate Office
@@ -130,12 +130,24 @@ function Update-AllSoftware {
     Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
     if ($?) {
         Write-Host "✅ All software updated successfully!" -ForegroundColor Green
-        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "All software updated successfully"
+        Add-LogEntry "All software updated successfully"
     } else {
         Write-Host "❌ Failed to update all software." -ForegroundColor Red
-        Add-Content -Path "C:\PCSetupToolkit\log.txt" -Value "Failed to update all software"
+        Add-LogEntry "Failed to update all software"
     }
     Read-Host "`nPress Enter to return to the menu..."
+}
+
+function Add-LogEntry {
+    param (
+        [string]$Entry
+    )
+    $logPath = "C:\PCSetupToolkit\log.txt"
+    $logDir = Split-Path -Path $logPath -Parent
+    if (-not (Test-Path -Path $logDir)) {
+        New-Item -ItemType Directory -Path $logDir -Force
+    }
+    Add-Content -Path $logPath -Value $Entry
 }
 
 # Main program flow
