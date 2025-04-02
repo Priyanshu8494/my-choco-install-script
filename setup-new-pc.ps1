@@ -22,6 +22,7 @@ function Ensure-PackageManagers {
         Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
         Set-ExecutionPolicy Bypass -Scope Process -Force
         Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     }
 }
 
@@ -90,12 +91,12 @@ function Install-NormalSoftware {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
             
-            Start-Process -FilePath "winget" -ArgumentList "install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+            winget install --id=$($app.ID) --silent --accept-source-agreements --accept-package-agreements
             
             if ($?) {
                 Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
             } else {
-                Write-Host "❌ Failed to install $($app.Name)" -ForegroundColor Red
+                Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
             }
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
