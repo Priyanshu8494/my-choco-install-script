@@ -106,6 +106,24 @@ function Install-NormalSoftware {
     Read-Host "`nPress Enter to return to the menu..."
 }
 
+function Install-MSOffice {
+    Write-Host "Installing Microsoft Office..." -ForegroundColor Yellow
+    # Add the actual Office installation logic here
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
+function Invoke-Activation {
+    Write-Host "Running System Activation Toolkit..." -ForegroundColor Yellow
+    # Add activation command logic here
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
+function Update-AllSoftware {
+    Write-Host "Updating all installed software using Winget..." -ForegroundColor Yellow
+    Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
 # Main program flow
 Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
 
