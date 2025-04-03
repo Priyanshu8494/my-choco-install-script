@@ -1,159 +1,298 @@
 <#
-.SYNOPSIS
-  Priyanshu Suryavanshi PC Setup Toolkit
-.DESCRIPTION
-  Automated PC setup with software installation and system activation
+	.SYNOPSIS
+	Download Office 2019, 2021, 2024, and 365
 
-.NOTES
-  - Work in progress.
+	.PARAMETER Branch
+	Choose Office branch: 2019, 2021, 2024, and 365
+
+	.PARAMETER Channel
+	Choose Office channel: 2019, 2021, 2024, and 365
+
+	.PARAMETER Components
+	Choose Office components: Access, OneDrive, Outlook, Word, Excel, PowerPoint, Teams, OneNote, Publisher
+
+	.EXAMPLE Download Office 2019 with the Word, Excel, PowerPoint components
+	Download.ps1 -Branch ProPlus2019Retail -Channel Current -Components Word, Excel, PowerPoint
+
+	.EXAMPLE Download Office 2021 with the Excel, Word components
+	Download.ps1 -Branch ProPlus2021Volume -Channel PerpetualVL2021 -Components Excel, Word
+
+	.EXAMPLE Download Office 2024 with the Excel, Word components
+	Download.ps1 -Branch ProPlus2024Volume -Channel PerpetualVL2024 -Components Excel, Word
+
+	.EXAMPLE Download Office 365 with the Excel, Word, PowerPoint components
+	Download.ps1 -Branch O365ProPlusRetail -Channel Current -Components Excel, OneDrive, Outlook, PowerPoint, Teams, Word
+
+	.LINK
+	https://config.office.com/deploymentsettings
+
+	.LINK
+	https://docs.microsoft.com/en-us/deployoffice/vlactivation/gvlks
+
+	.NOTES
+	Run as non-admin
 #>
+[CmdletBinding()]
+param
+(
+	[Parameter(Mandatory = $true)]
+	[ValidateSet("ProPlus2019Retail", "ProPlus2021Volume", "ProPlus2024Volume", "O365ProPlusRetail")]
+	[string]
+	$Branch,
 
-function Ensure-PackageManagers {
-    # Ensure Winget is installed and available
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "❌ Winget is not installed or not working properly!" -ForegroundColor Red
-        Write-Host "Please manually install Winget from: https://aka.ms/getwinget" -ForegroundColor Yellow
-        Read-Host "Press Enter to exit..."
-        exit
-    }
+	[Parameter(Mandatory = $true)]
+	[ValidateSet("Current", "PerpetualVL2021", "PerpetualVL2024", "SemiAnnual")]
+	[string]
+	$Channel,
 
-    # Ensure Chocolatey is installed
-    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-        Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    }
+	[Parameter(Mandatory = $true)]
+	[ValidateSet("Access", "OneDrive", "Outlook", "Word", "Excel", "OneNote", "Publisher", "PowerPoint", "Teams")]
+	[string[]]
+	$Components
+)
+
+if (-not (Test-Path -Path "$PSScriptRoot\Default.xml"))
+{
+	Write-Warning -Message "Default.xml doesn't exist"
+	exit
 }
 
-function Show-Header {
-    Clear-Host
-    Write-Host ""
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "          Priyanshu Suryavanshi PC Setup Toolkit             " -ForegroundColor Green
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host ""
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+if ($Host.Version.Major -eq 5)
+{
+	# Progress bar can significantly impact cmdlet performance
+	# https://github.com/PowerShell/PowerShell/issues/2138
+	$Script:ProgressPreference = "SilentlyContinue"
 }
 
-function Show-Menu {
-    param (
-        [string]$StatusMessage = "", 
-        [string]$StatusColor = "Yellow"
-    )
-    
-    Show-Header
+[xml]$Config = Get-Content -Path "$PSScriptRoot\Default.xml" -Encoding Default -Force
 
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "                    Work in Progress                       " -ForegroundColor Yellow
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host " - Work in progress." -ForegroundColor White
-    Write-Host "============================================================" -ForegroundColor Cyan
-
-    if ($StatusMessage) {
-        Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
-    }
-
-    Write-Host ""
-    Write-Host " Main Menu Options: " -ForegroundColor Green
-    Write-Host " ====================" -ForegroundColor Green
-    Write-Host " 1. Install Essential Software" -ForegroundColor White
-    Write-Host " 2. Install MS Office Suite" -ForegroundColor White
-    Write-Host " 3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
-    Write-Host " 4. Update All Installed Software (Using Winget)" -ForegroundColor White
-    Write-Host " 0. Exit" -ForegroundColor Red
-    Write-Host " Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
-    Write-Host " ====================" -ForegroundColor Green
-    Write-Host "============================================================" -ForegroundColor Cyan
+switch ($Branch)
+{
+	ProPlus2019Retail
+	{
+		($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2019Retail"
+	}
+	ProPlus2021Volume
+	{
+		($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2021Volume"
+	}
+	ProPlus2024Volume
+	{
+		($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "ProPlus2024Volume"
+	}
+	O365ProPlusRetail
+	{
+		($Config.Configuration.Add.Product | Where-Object -FilterScript {$_.ID -eq ""}).ID = "O365ProPlusRetail"
+	}
 }
 
-function Install-NormalSoftware {
-    Ensure-PackageManagers
-    
-    $softwareList = @(
-        @{Name="Google Chrome"; ID="Google.Chrome"},
-        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
-        @{Name="WinRAR"; ID="RARLab.WinRAR"},
-        @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
-        @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
-        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
-    )
-
-    Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $softwareList.Count; $i++) {
-        Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
-    }
-    
-    $selection = Read-Host "Enter selection (e.g., 1,3,5)"
-    $selectedIndices = $selection -split "," | ForEach-Object {$_ -as [int]}
-    
-    foreach ($index in $selectedIndices) {
-        if ($index -ge 1 -and $index -le $softwareList.Count) {
-            $app = $softwareList[$index - 1]
-            Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            
-            Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-            
-            if ($?) {
-                Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
-            } else {
-                Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
-            }
-        } else {
-            Write-Host "  Invalid selection: $index" -ForegroundColor Red
-        }
-    }
-
-    Read-Host "`nPress Enter to return to the menu..."
+switch ($Channel)
+{
+	Current
+	{
+		($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "Current"
+	}
+	PerpetualVL2021
+	{
+		($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "PerpetualVL2021"
+	}
+	PerpetualVL2024
+	{
+		($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "PerpetualVL2024"
+	}
+	SemiAnnual
+	{
+		($Config.Configuration.Add | Where-Object -FilterScript {$_.Channel -eq ""}).Channel = "SemiAnnual"
+	}
 }
 
-function Update-AllSoftware {
-    Ensure-PackageManagers
+foreach ($Component in $Components)
+{
+	switch ($Component)
+	{
+		Access
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Access']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+		Excel
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Excel']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+		OneDrive
+		{
+			$OneDrive = Get-Package -Name "Microsoft OneDrive" -ProviderName Programs -Force -ErrorAction Ignore
+			if (-not $OneDrive)
+			{
+				switch ((Get-CimInstance -ClassName Win32_OperatingSystem).Caption)
+				{
+					{$_ -match 10}
+					{
+						if (Test-Path -Path $env:SystemRoot\SysWOW64\OneDriveSetup.exe)
+						{
+							Write-Information -MessageData "" -InformationAction Continue
+							Write-Verbose -Message "OneDrive Installing" -Verbose
 
-    Write-Host "🔄 Checking for software updates via Winget..." -ForegroundColor Yellow
-    Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+							Start-Process -FilePath $env:SystemRoot\SysWOW64\OneDriveSetup.exe
+						}
+						else
+						{
+							$Script:OneDriveInstalled = $false
+						}
+					}
+					{$_ -match 11}
+					{
+						if (Test-Path -Path $env:SystemRoot\System32\OneDriveSetup.exe)
+						{
+							Write-Information -MessageData "" -InformationAction Continue
+							Write-Verbose -Message "OneDrive Installing" -Verbose
 
-    if ($?) {
-        Write-Host "✅ All installed software updated successfully!" -ForegroundColor Green
-    } else {
-        Write-Host "❌ Failed to update some software. Please check Winget logs." -ForegroundColor Red
-    }
+							Start-Process -FilePath $env:SystemRoot\SysWOW64\OneDriveSetup.exe
+						}
+						else
+						{
+							$Script:OneDriveInstalled = $false
+						}
+					}
+				}
 
-    Read-Host "`nPress Enter to return to the menu..."
+				if (-not $Script:OneDriveInstalled)
+				{
+					Write-Information -MessageData "" -InformationAction Continue
+					Write-Verbose -Message "OneDrive Downloading" -Verbose
+
+					# Parse XML to get the URL
+					# https://go.microsoft.com/fwlink/p/?LinkID=844652
+					$Parameters = @{
+						Uri             = "https://g.live.com/1rewlive5skydrive/OneDriveProductionV2"
+						UseBasicParsing = $true
+						Verbose         = $true
+					}
+					$Content = Invoke-RestMethod @Parameters
+
+					# Remove invalid chars
+					[xml]$OneDriveXML = $Content -replace "ï»¿", ""
+
+					$OneDriveURL = ($OneDriveXML).root.update.amd64binary.url | Select-Object -Index 1
+					$DownloadsFolder = Get-ItemPropertyValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Name "{374DE290-123F-4565-9164-39C4925E467B}"
+					$Parameters = @{
+						Uri             = $OneDriveURL
+						OutFile         = "$DownloadsFolder\OneDriveSetup.exe"
+						UseBasicParsing = $true
+						Verbose         = $true
+					}
+					Invoke-WebRequest @Parameters
+
+					Start-Process -FilePath "$DownloadsFolder\OneDriveSetup.exe" -Wait
+					Remove-Item -Path "$DownloadsFolder\OneDriveSetup.exe" -Force
+				}
+
+				Get-ScheduledTask -TaskName "Onedrive* Update*" | Enable-ScheduledTask | Start-ScheduledTask
+			}
+		}
+		Outlook
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Outlook']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+		Word
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Word']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+		PowerPoint
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='PowerPoint']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+  		OneNote
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='OneNote']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+  		Publisher
+		{
+			$Node = $Config.SelectSingleNode("//ExcludeApp[@ID='Publisher']")
+			$Node.ParentNode.RemoveChild($Node)
+		}
+		Teams
+		{
+			Write-Information -MessageData "" -InformationAction Continue
+			Write-Verbose -Message "Teams Downloading" -Verbose
+
+			# https://www.microsoft.com/microsoft-teams/download-app
+			$Parameters = @{
+				Uri             = "https://statics.teams.cdn.office.net/production-windows-x64/enterprise/webview2/lkg/MSTeams-x64.msix"
+				OutFile         = "$DownloadsFolder\MSTeams-x64.msix"
+				UseBasicParsing = $true
+				Verbose         = $true
+			}
+			Invoke-RestMethod @Parameters
+		}
+	}
 }
 
-function Invoke-Activation {
-    Write-Host "Running System Activation Toolkit..." -ForegroundColor Yellow
-    Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
-    Read-Host "`nPress Enter to return to the menu..."
+$Config.Save("$PSScriptRoot\Config.xml")
+
+# Microsoft blocks Russian and Belarusian regions for Office downloading
+# https://docs.microsoft.com/en-us/windows/win32/intl/table-of-geographical-locations
+# https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine
+if (((Get-WinHomeLocation).GeoId -eq "203") -or ((Get-WinHomeLocation).GeoId -eq "29"))
+{
+	# Set to Ukraine
+	$Script:Region = (Get-WinHomeLocation).GeoId
+	Set-WinHomeLocation -GeoId 241
+	Write-Warning -Message "Region changed to Ukrainian"
+
+	$Script:RegionChanged = $true
 }
 
-# Main program flow
-Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
+# It is needed to remove these keys to bypass Russian and Belarusian region blocks
+Remove-Item -Path HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Experiment -Recurse -Force -ErrorAction Ignore
+Remove-Item -Path HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ExperimentConfigs -Recurse -Force -ErrorAction Ignore
+Remove-Item -Path HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\ExperimentEcs -Recurse -Force -ErrorAction Ignore
 
-do {
-    Show-Menu
-    $choice = Read-Host "`nEnter your choice [0-4]"
+# Download Office Deployment Tool
+# https://www.microsoft.com/en-us/download/details.aspx?id=49117
+if (-not (Test-Path -Path "$PSScriptRoot\setup.exe"))
+{
+	$Parameters = @{
+		Uri              = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117"
+		UseBasicParsing  = $true
+	}
+	$ODTURL = ((Invoke-WebRequest @Parameters).Links | Where-Object {$_.outerHTML -match "click here to download manually"}).href
+	$Parameters = @{
+		Uri             = $ODTURL
+		OutFile         = "$PSScriptRoot\officedeploymenttool.exe"
+		UseBasicParsing = $true
+		Verbose         = $true
+	}
+	Invoke-WebRequest @Parameters
 
-    switch ($choice) {
-        '1' {
-            Install-NormalSoftware
-        }
-        '2' {
-            Install-MSOffice
-        }
-        '3' {
-            Invoke-Activation
-        }
-        '4' {
-            Update-AllSoftware
-        }
-        '0' { 
-            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
-            exit 
-        }
-        default {
-            Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
-        }
-    }
-} while ($true)
+	# Expand officedeploymenttool.exe
+	Start-Process "$PSScriptRoot\officedeploymenttool.exe" -ArgumentList "/quiet /extract:`"$PSScriptRoot\officedeploymenttool`"" -Wait
+
+	$Parameters = @{
+		Path        = "$PSScriptRoot\officedeploymenttool\setup.exe"
+		Destination = "$PSScriptRoot"
+		Force       = $true
+	}
+	Move-Item @Parameters
+
+	Start-Sleep -Seconds 1
+
+	Remove-item -Path "$PSScriptRoot\officedeploymenttool", "$PSScriptRoot\officedeploymenttool.exe" -Recurse -Force
+}
+
+# Start downloading to the Office folder
+Start-Process -FilePath "$PSScriptRoot\setup.exe" -ArgumentList "/download `"$PSScriptRoot\Config.xml`"" -Wait
+
+if ($Script:RegionChanged)
+{
+	# Set to original region ID
+	Set-WinHomeLocation -GeoId $Script:Region
+	Write-Warning -Message "Region changed to original one"
+}
