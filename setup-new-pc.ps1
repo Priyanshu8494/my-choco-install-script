@@ -106,6 +106,21 @@ function Install-NormalSoftware {
     Read-Host "`nPress Enter to return to the menu..."
 }
 
+function Update-AllSoftware {
+    Ensure-PackageManagers
+
+    Write-Host "🔄 Checking for software updates via Winget..." -ForegroundColor Yellow
+    Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+
+    if ($?) {
+        Write-Host "✅ All installed software updated successfully!" -ForegroundColor Green
+    } else {
+        Write-Host "❌ Failed to update some software. Please check Winget logs." -ForegroundColor Red
+    }
+
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
 # Main program flow
 Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
 
