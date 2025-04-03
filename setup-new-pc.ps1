@@ -2,6 +2,18 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Function to Check and Install Winget
+function Ensure-Winget {
+    if (-Not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Host "Winget is not installed. Installing..." -ForegroundColor Yellow
+        Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
+        Add-AppxPackage -Path "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
+        Write-Host "Winget installation complete!" -ForegroundColor Green
+    } else {
+        Write-Host "Winget is already installed." -ForegroundColor Green
+    }
+}
+
 # Main Menu
 function Show-Menu {
     param (
@@ -30,6 +42,7 @@ function Show-Progress {
 
 # Function to Install Essential Software
 function Install-EssentialSoftware {
+    Ensure-Winget
     Write-Host "Installing Essential Software..." -ForegroundColor Cyan
     Show-Progress -Activity "Installing Software" -PercentComplete 10
     winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements
@@ -59,6 +72,7 @@ function Run-ActivationToolkit {
 
 # Function to Update Software
 function Update-Software {
+    Ensure-Winget
     Write-Host "Updating Installed Software..." -ForegroundColor Cyan
     winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
     Write-Host "All Software Updated Successfully!" -ForegroundColor Green
