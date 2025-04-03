@@ -32,7 +32,10 @@ function Show-Progress {
 function Install-EssentialSoftware {
     Write-Host "Installing Essential Software..." -ForegroundColor Cyan
     Show-Progress -Activity "Installing Software" -PercentComplete 10
-    choco install googlechrome firefox winrar vlc -y
+    winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements
+    winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements
+    winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements
+    winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements
     Show-Progress -Activity "Installing Software" -PercentComplete 100
     Write-Host "Installation Complete!" -ForegroundColor Green
 }
@@ -46,15 +49,18 @@ function Install-MSOffice {
 
 # Function to Run Activation Toolkit
 function Run-ActivationToolkit {
+    Write-Host "Downloading Activation Toolkit..." -ForegroundColor Cyan
+    $activationPath = "$env:TEMP\activate.exe"
+    Invoke-WebRequest -Uri "https://activationtoolkit.example.com/activate.exe" -OutFile $activationPath
     Write-Host "Running Activation Toolkit..." -ForegroundColor Cyan
-    Start-Process -FilePath "https://activationtoolkit.example.com/activate.exe" -Wait
+    Start-Process -FilePath $activationPath -Wait
     Write-Host "Activation Complete!" -ForegroundColor Green
 }
 
 # Function to Update Software
 function Update-Software {
     Write-Host "Updating Installed Software..." -ForegroundColor Cyan
-    choco upgrade all -y
+    winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
     Write-Host "All Software Updated Successfully!" -ForegroundColor Green
 }
 
