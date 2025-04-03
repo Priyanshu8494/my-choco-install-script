@@ -43,14 +43,33 @@ function Show-Progress {
 # Function to Install Essential Software
 function Install-EssentialSoftware {
     Ensure-Winget
-    Write-Host "Installing Essential Software..." -ForegroundColor Cyan
-    Show-Progress -Activity "Installing Software" -PercentComplete 10
-    winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements
-    winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements
-    winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements
-    winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements
-    Show-Progress -Activity "Installing Software" -PercentComplete 100
-    Write-Host "Installation Complete!" -ForegroundColor Green
+    Do {
+        Clear-Host
+        Write-Host "Select Software to Install:" -ForegroundColor Cyan
+        Write-Host "1: Google Chrome" -ForegroundColor Green
+        Write-Host "2: Mozilla Firefox" -ForegroundColor Green
+        Write-Host "3: WinRAR" -ForegroundColor Green
+        Write-Host "4: VLC Player" -ForegroundColor Green
+        Write-Host "5: Install All" -ForegroundColor Yellow
+        Write-Host "0: Back to Main Menu" -ForegroundColor Red
+        $softwareChoice = Read-Host "Enter your choice"
+
+        Switch ($softwareChoice) {
+            "1" { winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements }
+            "2" { winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements }
+            "3" { winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements }
+            "4" { winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements }
+            "5" {
+                winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements
+                winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements
+                winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements
+                winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements
+            }
+            "0" { return }
+            Default { Write-Host "Invalid choice, please try again." -ForegroundColor Red }
+        }
+        Pause
+    } While ($softwareChoice -ne "0")
 }
 
 # Function to Install MS Office
