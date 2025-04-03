@@ -1,113 +1,137 @@
-# Set Console Encoding to UTF-8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+<#
+.SYNOPSIS
+  Priyanshu Suryavanshi PC Setup Toolkit
+.DESCRIPTION
+  Automated PC setup with software installation and system activation
 
-# Function to Check and Install Winget
-function Ensure-Winget {
-    if (-Not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "Winget is not installed. Installing..." -ForegroundColor Yellow
-        Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
-        Add-AppxPackage -Path "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
-        Write-Host "Winget installation complete!" -ForegroundColor Green
-    } else {
-        Write-Host "Winget is already installed." -ForegroundColor Green
+.NOTES
+  - Work in progress.
+#>
+
+function Ensure-PackageManagers {
+    # Ensure Winget is installed and available
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Host "❌ Winget is not installed or not working properly!" -ForegroundColor Red
+        Write-Host "Please manually install Winget from: https://aka.ms/getwinget" -ForegroundColor Yellow
+        Read-Host "Press Enter to exit..."
+        exit
+    }
+
+    # Ensure Chocolatey is installed
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+        Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     }
 }
 
-# Main Menu
+function Show-Header {
+    Clear-Host
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "          Priyanshu Suryavanshi PC Setup Toolkit             " -ForegroundColor Green
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host ""
+}
+
 function Show-Menu {
     param (
-        [string]$Title = "PC SETUP - Main Menu"
+        [string]$StatusMessage = "", 
+        [string]$StatusColor = "Yellow"
     )
-    Clear-Host
-    Write-Host "==================================" -ForegroundColor Cyan
-    Write-Host "           $Title            " -ForegroundColor Yellow
-    Write-Host "==================================" -ForegroundColor Cyan
-    Write-Host "1: Install Essential Software" -ForegroundColor Green
-    Write-Host "2: Install MS Office" -ForegroundColor Green
-    Write-Host "3: Run System Activation Toolkit" -ForegroundColor Green
-    Write-Host "4: Update All Installed Software" -ForegroundColor Green
-    Write-Host "0: Exit" -ForegroundColor Red
-    Write-Host "==================================" -ForegroundColor Cyan
-}
+    
+    Show-Header
 
-# Progress Bar Example Function
-function Show-Progress {
-    param (
-        [string]$Activity = "Processing",
-        [int]$PercentComplete = 0
-    )
-    Write-Progress -Activity $Activity -Status "Please wait..." -PercentComplete $PercentComplete
-}
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "                    Work in Progress                       " -ForegroundColor Yellow
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host " - Work in progress." -ForegroundColor White
+    Write-Host "============================================================" -ForegroundColor Cyan
 
-# Function to Install Essential Software
-function Install-EssentialSoftware {
-    Ensure-Winget
-    Do {
-        Clear-Host
-        Write-Host "Select Software to Install:" -ForegroundColor Cyan
-        Write-Host "1: Google Chrome" -ForegroundColor Green
-        Write-Host "2: Mozilla Firefox" -ForegroundColor Green
-        Write-Host "3: WinRAR" -ForegroundColor Green
-        Write-Host "4: VLC Player" -ForegroundColor Green
-        Write-Host "5: Install All" -ForegroundColor Yellow
-        Write-Host "0: Back to Main Menu" -ForegroundColor Red
-        $softwareChoice = Read-Host "Enter your choice"
-
-        Switch ($softwareChoice) {
-            "1" { winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements }
-            "2" { winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements }
-            "3" { winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements }
-            "4" { winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements }
-            "5" {
-                winget install --id=Google.Chrome --silent --accept-source-agreements --accept-package-agreements
-                winget install --id=Mozilla.Firefox --silent --accept-source-agreements --accept-package-agreements
-                winget install --id=RARLab.WinRAR --silent --accept-source-agreements --accept-package-agreements
-                winget install --id=VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements
-            }
-            "0" { return }
-            Default { Write-Host "Invalid choice, please try again." -ForegroundColor Red }
-        }
-        Pause
-    } While ($softwareChoice -ne "0")
-}
-
-# Function to Install MS Office
-function Install-MSOffice {
-    Write-Host "Downloading and Installing MS Office..." -ForegroundColor Cyan
-    Invoke-Expression "& { $(Invoke-RestMethod 'https://raw.githubusercontent.com/example/MSOfficeInstaller/main/install.ps1') }"
-    Write-Host "MS Office Installation Complete!" -ForegroundColor Green
-}
-
-# Function to Run Activation Toolkit
-function Run-ActivationToolkit {
-    Write-Host "Downloading Activation Toolkit..." -ForegroundColor Cyan
-    $activationPath = "$env:TEMP\activate.exe"
-    Invoke-WebRequest -Uri "https://activationtoolkit.example.com/activate.exe" -OutFile $activationPath
-    Write-Host "Running Activation Toolkit..." -ForegroundColor Cyan
-    Start-Process -FilePath $activationPath -Wait
-    Write-Host "Activation Complete!" -ForegroundColor Green
-}
-
-# Function to Update Software
-function Update-Software {
-    Ensure-Winget
-    Write-Host "Updating Installed Software..." -ForegroundColor Cyan
-    winget upgrade --all --silent --accept-source-agreements --accept-package-agreements
-    Write-Host "All Software Updated Successfully!" -ForegroundColor Green
-}
-
-# Main Menu Execution
-Do {
-    Show-Menu
-    $choice = Read-Host "Enter your choice"
-    Switch ($choice) {
-        "1" { Install-EssentialSoftware }
-        "2" { Install-MSOffice }
-        "3" { Run-ActivationToolkit }
-        "4" { Update-Software }
-        "0" { Write-Host "Exiting..." -ForegroundColor Red; Exit }
-        Default { Write-Host "Invalid choice, please try again." -ForegroundColor Red }
+    if ($StatusMessage) {
+        Write-Host "[STATUS] $StatusMessage" -ForegroundColor $StatusColor
     }
-    Pause
-} While ($true)
+
+    Write-Host ""
+    Write-Host " Main Menu Options: " -ForegroundColor Green
+    Write-Host " ====================" -ForegroundColor Green
+    Write-Host " 1. Install Essential Software" -ForegroundColor White
+    Write-Host " 2. Install MS Office Suite" -ForegroundColor White
+    Write-Host " 3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
+    Write-Host " 4. Update All Installed Software (Using Winget)" -ForegroundColor White
+    Write-Host " 0. Exit" -ForegroundColor Red
+    Write-Host " ====================" -ForegroundColor Green
+    Write-Host "============================================================" -ForegroundColor Cyan
+}
+
+function Install-NormalSoftware {
+    Ensure-PackageManagers
+    
+    $softwareList = @(
+        @{Name="Google Chrome"; ID="Google.Chrome"},
+        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
+        @{Name="WinRAR"; ID="RARLab.WinRAR"},
+        @{Name="VLC Player"; ID="VideoLAN.VLC"},
+        @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
+        @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
+        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
+    )
+
+    Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $softwareList.Count; $i++) {
+        Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
+    }
+    
+    $selection = Read-Host "Enter selection (e.g., 1,3,5)"
+    $selectedIndices = $selection -split "," | ForEach-Object {$_ -as [int]}
+    
+    foreach ($index in $selectedIndices) {
+        if ($index -ge 1 -and $index -le $softwareList.Count) {
+            $app = $softwareList[$index - 1]
+            Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
+            
+            Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+            
+            if ($?) {
+                Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
+            } else {
+                Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
+            }
+        } else {
+            Write-Host "  Invalid selection: $index" -ForegroundColor Red
+        }
+    }
+
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
+# Main program flow
+Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
+
+do {
+    Show-Menu
+    $choice = Read-Host "`nEnter your choice [0-4]"
+
+    switch ($choice) {
+        '1' {
+            Install-NormalSoftware
+        }
+        '2' {
+            Install-MSOffice
+        }
+        '3' {
+            Invoke-Activation
+        }
+        '4' {
+            Update-AllSoftware
+        }
+        '0' { 
+            Write-Host "Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
+            exit 
+        }
+        default {
+            Show-Menu -StatusMessage "Invalid selection! Please choose between 0-4" -StatusColor "Red"
+        }
+    }
+} while ($true)
