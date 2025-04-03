@@ -27,17 +27,17 @@ function Install-Office2024 {
     
     # Create Configuration File
     $xmlContent = @"
-    <Configuration>
-        <Add OfficeClientEdition="64" Channel="Current">
-            <Product ID="ProPlus2024Retail">
-                <Language ID="en-us"/>
-            </Product>
-        </Add>
-        <Property Name="AUTOACTIVATE" Value="1"/>
-        <Property Name="FORCEAPPSHUTDOWN" Value="TRUE"/>
-        <Display Level="None" AcceptEULA="TRUE"/>
-    </Configuration>
-    "@
+<Configuration>
+    <Add OfficeClientEdition="64" Channel="Current">
+        <Product ID="ProPlus2024Retail">
+            <Language ID="en-us"/>
+        </Product>
+    </Add>
+    <Property Name="AUTOACTIVATE" Value="1"/>
+    <Property Name="FORCEAPPSHUTDOWN" Value="TRUE"/>
+    <Display Level="None" AcceptEULA="TRUE"/>
+</Configuration>
+"@
     
     $xmlPath = "$odtPath\configuration.xml"
     $xmlContent | Set-Content -Path $xmlPath -Encoding UTF8
