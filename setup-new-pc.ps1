@@ -61,6 +61,7 @@ function Show-Menu {
     Write-Host " 3. System Activation Toolkit (Windows & Office)" -ForegroundColor White
     Write-Host " 4. Update All Installed Software (Using Winget)" -ForegroundColor White
     Write-Host " 0. Exit" -ForegroundColor Red
+    Write-Host " Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
     Write-Host " ====================" -ForegroundColor Green
     Write-Host "============================================================" -ForegroundColor Cyan
 }
