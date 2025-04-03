@@ -122,6 +122,12 @@ function Update-AllSoftware {
     Read-Host "`nPress Enter to return to the menu..."
 }
 
+function Invoke-Activation {
+    Write-Host "Running System Activation Toolkit..." -ForegroundColor Yellow
+    Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
+    Read-Host "`nPress Enter to return to the menu..."
+}
+
 # Main program flow
 Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
 
