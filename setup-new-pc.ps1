@@ -5,11 +5,10 @@
   Automated PC setup with software installation and system activation
 
 .NOTES
-  - Work in progress.
+  - Auto-downloads and installs AnyDesk & UltraViewer silently
 #>
 
 function Ensure-PackageManagers {
-    # Ensure Winget is installed and available
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         Write-Host "❌ Winget is not installed or not working properly!" -ForegroundColor Red
         Write-Host "Please manually install Winget from: https://aka.ms/getwinget" -ForegroundColor Yellow
@@ -17,7 +16,6 @@ function Ensure-PackageManagers {
         exit
     }
 
-    # Ensure Chocolatey is installed
     if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
         Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
         Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -66,31 +64,41 @@ function Show-Menu {
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
+function Download-FileIfMissing($url, $targetPath) {
+    if (-not (Test-Path $targetPath)) {
+        Write-Host "🔽 Downloading $([System.IO.Path]::GetFileName($targetPath))..." -ForegroundColor Yellow
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $targetPath -UseBasicParsing
+            Write-Host "✅ Download complete!" -ForegroundColor Green
+        } catch {
+            Write-Host "❌ Failed to download from $url" -ForegroundColor Red
+        }
+    }
+}
+
 function Install-AnyDesk-Manual {
-    $installer = "$env:TEMP\AnyDesk.exe"
-    Copy-Item -Path "/mnt/data/AnyDesk.exe" -Destination $installer -Force
+    $anydeskPath = "$PSScriptRoot\AnyDesk.exe"
+    $anydeskURL = "https://download.anydesk.com/AnyDesk.exe"
+    Download-FileIfMissing $anydeskURL $anydeskPath
 
-    Write-Host "⚙️ Installing AnyDesk silently (fallback)..." -ForegroundColor Yellow
-    Start-Process -FilePath $installer -ArgumentList "/silent" -Wait
-
-    if ($?) {
-        Write-Host "✅ AnyDesk installed via fallback successfully!" -ForegroundColor Green
+    if (Test-Path $anydeskPath) {
+        Start-Process -FilePath $anydeskPath -ArgumentList "/silent" -Wait
+        Write-Host "✅ AnyDesk installed from EXE fallback." -ForegroundColor Green
     } else {
-        Write-Host "❌ AnyDesk fallback installation failed." -ForegroundColor Red
+        Write-Host "❌ AnyDesk installer not found or download failed." -ForegroundColor Red
     }
 }
 
 function Install-UltraViewer-Manual {
-    $installer = "$env:TEMP\UltraViewer_setup.exe"
-    Copy-Item -Path "/mnt/data/UltraViewer_setup_6.6_en.exe" -Destination $installer -Force
+    $ultraviewerPath = "$PSScriptRoot\UltraViewer_setup_6.6_en.exe"
+    $ultraURL = "https://www.ultraviewer.net/download/en/UltraViewer_setup_6.6_en.exe"
+    Download-FileIfMissing $ultraURL $ultraviewerPath
 
-    Write-Host "⚙️ Installing UltraViewer silently (fallback)..." -ForegroundColor Yellow
-    Start-Process -FilePath $installer -ArgumentList "/silent" -Wait
-
-    if ($?) {
-        Write-Host "✅ UltraViewer installed via fallback successfully!" -ForegroundColor Green
+    if (Test-Path $ultraviewerPath) {
+        Start-Process -FilePath $ultraviewerPath -ArgumentList "/VERYSILENT /NORESTART" -Wait
+        Write-Host "✅ UltraViewer installed from EXE." -ForegroundColor Green
     } else {
-        Write-Host "❌ UltraViewer fallback installation failed." -ForegroundColor Red
+        Write-Host "❌ UltraViewer installer not found or download failed." -ForegroundColor Red
     }
 }
 
@@ -104,7 +112,7 @@ function Install-NormalSoftware {
         @{Name="VLC Player"; ID="VideoLAN.VLC"},
         @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
         @{Name="AnyDesk"; ID="AnyDeskSoftwareGmbH.AnyDesk"},
-        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
+        @{Name="UltraViewer"; ID=$null}
     )
 
     Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
@@ -121,7 +129,7 @@ function Install-NormalSoftware {
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
 
             if ($app.Name -eq "AnyDesk") {
-                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                Start-Process -FilePath "winget" -ArgumentList "install --id $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
                 if (-not $?) {
                     Write-Host "⚠️ Winget failed. Installing AnyDesk using fallback..." -ForegroundColor Yellow
                     Install-AnyDesk-Manual
@@ -130,13 +138,8 @@ function Install-NormalSoftware {
                 }
             }
             elseif ($app.Name -eq "UltraViewer") {
-                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-                if (-not $?) {
-                    Write-Host "⚠️ Winget failed. Installing UltraViewer using fallback..." -ForegroundColor Yellow
-                    Install-UltraViewer-Manual
-                } else {
-                    Write-Host "✅ UltraViewer installed successfully!" -ForegroundColor Green
-                }
+                Write-Host "⚠️ UltraViewer not available on Winget. Installing via EXE..." -ForegroundColor Yellow
+                Install-UltraViewer-Manual
             }
             else {
                 Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
@@ -175,8 +178,7 @@ function Invoke-Activation {
     Read-Host "`nPress Enter to return to the menu..."
 }
 
-# Main program flow
-Ensure-PackageManagers  # Ensure Winget & Chocolatey are installed before proceeding
+Ensure-PackageManagers
 
 do {
     Show-Menu
