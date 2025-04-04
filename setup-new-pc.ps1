@@ -67,11 +67,9 @@ function Show-Menu {
 }
 
 function Install-AnyDeskDirectly {
-    # ----------------- CONFIG -----------------
     $anydeskUrl = "http://download.anydesk.com/AnyDesk.exe"
     $installPath = "C:\\AnyDesk"
     $exePath = "$installPath\\AnyDesk.exe"
-    # -----------------------------------------
 
     Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
 
@@ -83,7 +81,7 @@ function Install-AnyDeskDirectly {
     Invoke-WebRequest -Uri $anydeskUrl -OutFile $exePath
 
     Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
-    Start-Process -FilePath $exePath -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
+    Start-Process -FilePath $exePath -ArgumentList "--install `\"$installPath`\" --start-with-win --silent" -Wait
 
     Write-Host "✅ AnyDesk installed." -ForegroundColor Green
 
@@ -97,6 +95,38 @@ function Install-AnyDeskDirectly {
     Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
 }
 
+function Install-UltraViewerDirectly {
+    $uvUrl = "https://ultraviewer.net/UltraViewer_setup.exe"
+    $installPath = "C:\\UltraViewer"
+    $exePath = "$installPath\\UltraViewer_setup.exe"
+
+    Write-Host "`n📦 Installing UltraViewer to: $installPath" -ForegroundColor Cyan
+
+    if (-not (Test-Path $installPath)) {
+        New-Item -ItemType Directory -Path $installPath | Out-Null
+    }
+
+    Write-Host "⏬ Downloading UltraViewer..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $uvUrl -OutFile $exePath
+
+    Write-Host "🚀 Running UltraViewer installer silently..." -ForegroundColor Yellow
+    Start-Process -FilePath $exePath -ArgumentList "/VERYSILENT /NORESTART" -Wait
+
+    $installedPath = "C:\\Program Files\\UltraViewer\\UltraViewer.exe"
+    if (Test-Path $installedPath) {
+        $desktop = [Environment]::GetFolderPath("Desktop")
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut("$desktop\\UltraViewer.lnk")
+        $Shortcut.TargetPath = $installedPath
+        $Shortcut.IconLocation = "$installedPath,0"
+        $Shortcut.Save()
+
+        Write-Host "✅ UltraViewer installed and shortcut created." -ForegroundColor Green
+    } else {
+        Write-Host "❌ UltraViewer installation may have failed." -ForegroundColor Red
+    }
+}
+
 function Install-NormalSoftware {
     Ensure-PackageManagers
 
@@ -107,7 +137,7 @@ function Install-NormalSoftware {
         @{Name="VLC Player"; ID="VideoLAN.VLC"},
         @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
         @{Name="AnyDesk"; ID="custom-anydesk"},
-        @{Name="UltraViewer"; ID="UltraViewer.UltraViewer"}
+        @{Name="UltraViewer"; ID="custom-ultraviewer"}
     )
 
     Write-Host "Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
@@ -123,6 +153,8 @@ function Install-NormalSoftware {
             $app = $softwareList[$index - 1]
             if ($app.ID -eq "custom-anydesk") {
                 Install-AnyDeskDirectly
+            } elseif ($app.ID -eq "custom-ultraviewer") {
+                Install-UltraViewerDirectly
             } else {
                 Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
                 Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
