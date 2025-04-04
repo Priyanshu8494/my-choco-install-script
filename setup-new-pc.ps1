@@ -23,7 +23,9 @@ function Play-TypingSound {
         "C:\\Windows\\Media\\Windows Notify Calendar.wav",
         "C:\\Windows\\Media\\chimes.wav",
         "C:\\Windows\\Media\\Windows Notify Email.wav",
-        "C:\\Windows\\Media\\Speech On.wav"
+        "C:\\Windows\\Media\\Speech On.wav",
+        "C:\\Windows\\Media\\tada.wav",
+        "C:\\Windows\\Media\\Windows Ding.wav"
     )
     $soundPath = Get-Random -InputObject $soundOptions
     if (Test-Path $soundPath) {
@@ -48,7 +50,7 @@ function Show-Menu {
         Write-Host "   ➔ Ready to assist with your setup!" -ForegroundColor Green
     }
 
-    Write-Host "`n🪰 Main Menu:" -ForegroundColor Yellow
+    Write-Host "`n🩰 Main Menu:" -ForegroundColor Yellow
     Write-Host "   [1] 📦 Install Essential Software" -ForegroundColor White
     Write-Host "   [2] 💼 Install MS Office Suite" -ForegroundColor White
     Write-Host "   [3] 🔑 System Activation Toolkit (Windows & Office)" -ForegroundColor White
@@ -57,6 +59,7 @@ function Show-Menu {
 
     Write-Host "`n💡 Tip: Use keys to navigate (e.g., 1 for software install)"
     Write-Host "`n============================================================" -ForegroundColor DarkCyan
+    Play-TypingSound
 }
 
 function Show-Loading {
@@ -67,6 +70,7 @@ function Show-Loading {
         Start-Sleep -Milliseconds 300
     }
     Write-Host "`r$Message... Done!`n" -ForegroundColor Green
+    Play-TypingSound
 }
 
 function Ensure-PackageManagers {
@@ -82,6 +86,7 @@ function Ensure-PackageManagers {
         Set-ExecutionPolicy Bypass -Scope Process -Force
         Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        Play-TypingSound
     }
 }
 
@@ -91,6 +96,7 @@ function Install-AnyDeskDirectly {
     $exePath = "$installPath\\AnyDesk.exe"
 
     Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
+    Play-TypingSound
 
     if (-not (Test-Path $installPath)) {
         New-Item -ItemType Directory -Path $installPath | Out-Null
@@ -103,6 +109,7 @@ function Install-AnyDeskDirectly {
     Start-Process -FilePath $exePath -ArgumentList "--install `$installPath` --start-with-win --silent" -Wait
 
     Write-Host "✅ AnyDesk installed." -ForegroundColor Green
+    Play-TypingSound
 
     $desktop = [Environment]::GetFolderPath("Desktop")
     $WshShell = New-Object -ComObject WScript.Shell
@@ -112,6 +119,7 @@ function Install-AnyDeskDirectly {
     $Shortcut.Save()
 
     Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
+    Play-TypingSound
 }
 
 function Install-UltraViewerDirectly {
@@ -120,6 +128,7 @@ function Install-UltraViewerDirectly {
     $exePath = "$installPath\\UltraViewer_setup.exe"
 
     Write-Host "`n📦 Installing UltraViewer to: $installPath" -ForegroundColor Cyan
+    Play-TypingSound
 
     if (-not (Test-Path $installPath)) {
         New-Item -ItemType Directory -Path $installPath | Out-Null
@@ -141,9 +150,46 @@ function Install-UltraViewerDirectly {
         $Shortcut.Save()
 
         Write-Host "✅ UltraViewer installed and shortcut created." -ForegroundColor Green
+        Play-TypingSound
     } else {
         Write-Host "❌ UltraViewer installation may have failed." -ForegroundColor Red
     }
 }
 
 Show-Menu
+
+while ($true) {
+    $choice = Read-Host "`nEnter your choice"
+
+    switch ($choice) {
+        "1" {
+            Show-Menu -StatusMessage "Installing Essential Software..." -StatusColor "Cyan"
+            Play-TypingSound
+            # Call your essential software install function here
+        }
+        "2" {
+            Show-Menu -StatusMessage "Installing MS Office Suite..." -StatusColor "Cyan"
+            Play-TypingSound
+            # Call your MS Office install function here
+        }
+        "3" {
+            Show-Menu -StatusMessage "Launching Activation Toolkit..." -StatusColor "Cyan"
+            Play-TypingSound
+            # Call your activation function here
+        }
+        "4" {
+            Show-Menu -StatusMessage "Updating all software..." -StatusColor "Cyan"
+            Play-TypingSound
+            winget upgrade --all
+        }
+        "0" {
+            Write-Host "`n👋 Exiting setup. Have a great day!" -ForegroundColor Green
+            Play-TypingSound
+            break
+        }
+        default {
+            Write-Host "❌ Invalid choice. Please select a valid option (0-4)." -ForegroundColor Red
+            Play-TypingSound
+        }
+    }
+}
