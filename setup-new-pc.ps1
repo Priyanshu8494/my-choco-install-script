@@ -1,57 +1,46 @@
 # Must be run as Administrator
 
-# ----------------- CONFIG -----------------
-$anydeskUrl = "http://download.anydesk.com/AnyDesk.exe"
-$installPath = "C:\AnyDesk"
-$exePath = "$installPath\AnyDesk.exe"
-# -----------------------------------------
+# ------------- CONFIG -------------
+$installPath = "C:\UltraViewer"
+$ultraViewerUrl = "https://www.ultraviewer.net/UltraViewer_setup_6.6_en.exe"
+$ultraViewerInstaller = "$env:TEMP\UltraViewerInstaller.exe"
+$shortcutPath = "$env:PUBLIC\Desktop\UltraViewer.lnk"
+# ----------------------------------
 
 function Ensure-Admin {
     if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-        Write-Host "❌ Please run this script as Administrator." -ForegroundColor Red
+        Write-Host "Please run this script as Administrator." -ForegroundColor Red
         exit
     }
 }
 
-function Get-DesktopPath {
-    return [Environment]::GetFolderPath("Desktop")
-}
+function Install-UltraViewer {
+    Write-Host "`n📦 Downloading UltraViewer..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $ultraViewerUrl -OutFile $ultraViewerInstaller
 
-function Install-AnyDesk {
-    Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
+    Write-Host "📂 Installing to: $installPath" -ForegroundColor Cyan
+    Start-Process -FilePath $ultraViewerInstaller -ArgumentList "/VERYSILENT /DIR=`"$installPath`"" -Wait
 
-    if (-not (Test-Path $installPath)) {
-        New-Item -ItemType Directory -Path $installPath | Out-Null
-    }
-
-    Write-Host "⏬ Downloading AnyDesk..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri $anydeskUrl -OutFile $exePath
-
-    Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
-    Start-Process -FilePath $exePath -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
-
-    Write-Host "✅ AnyDesk installed." -ForegroundColor Green
-
-    Create-Shortcut -exePath $exePath -shortcutPath "$(Get-DesktopPath)\AnyDesk.lnk"
+    Write-Host "✅ UltraViewer installed successfully!" -ForegroundColor Green
 }
 
 function Create-Shortcut {
-    param (
-        [string]$exePath,
-        [string]$shortcutPath
-    )
+    Write-Host "🔗 Creating shortcut on Desktop..." -ForegroundColor Cyan
 
-    $WshShell = New-Object -ComObject WScript.Shell
-    $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-    $Shortcut.TargetPath = $exePath
-    $Shortcut.IconLocation = "$exePath,0"
-    $Shortcut.Save()
+    $targetExe = Join-Path $installPath "UltraViewer.exe"
+    $WScriptShell = New-Object -ComObject WScript.Shell
+    $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $targetExe
+    $shortcut.WorkingDirectory = $installPath
+    $shortcut.IconLocation = $targetExe
+    $shortcut.Save()
 
-    Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
+    Write-Host "✅ Shortcut created: $shortcutPath" -ForegroundColor Green
 }
 
-# ------------------ EXECUTION ------------------
+# ------------ EXECUTE ------------
 Ensure-Admin
-Install-AnyDesk
+Install-UltraViewer
+Create-Shortcut
 
-Write-Host "`n🎉 All tasks completed successfully!" -ForegroundColor Green
+Write-Host "`n🎉 All done! UltraViewer is ready to use." -ForegroundColor Green
