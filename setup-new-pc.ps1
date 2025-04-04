@@ -2,7 +2,7 @@
 
 # ----------------- CONFIG -----------------
 $installPath = "C:\UltraViewer"
-$ultraViewerUrl = "https://ultraviewer.net/en/download.html"
+$ultraViewerUrl = "https://ultraviewer.net/UltraViewer_setup_6.6_en.exe"
 $installerPath = "$env:TEMP\UltraViewer_Setup.exe"
 $shortcutPath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "UltraViewer.lnk")
 # -----------------------------------------
