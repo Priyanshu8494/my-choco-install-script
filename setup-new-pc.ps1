@@ -145,3 +145,5 @@ function Install-UltraViewerDirectly {
         Write-Host "❌ UltraViewer installation may have failed." -ForegroundColor Red
     }
 }
+
+Show-Menu
