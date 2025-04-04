@@ -2,7 +2,6 @@
 
 # ----------------- CONFIG -----------------
 $anydeskUrl = "http://download.anydesk.com/AnyDesk.exe"
-$password = "J9kzQ2Y0qO"
 $adminUsername = "oldadministrator"
 $adminPassword = "jsbehsid#Zyw4E3"
 # -----------------------------------------
@@ -15,7 +14,9 @@ function Ensure-Admin {
 }
 
 function Ask-InstallPath {
-    $defaultPath = "C:\ProgramData\AnyDesk"
+    $desktopPath = [Environment]::GetFolderPath("Desktop")
+    $defaultPath = Join-Path $desktopPath "AnyDesk"
+
     $customPath = Read-Host "📁 Enter install path for AnyDesk or press Enter for default [$defaultPath]"
     if ([string]::IsNullOrWhiteSpace($customPath)) {
         return $defaultPath
@@ -41,10 +42,7 @@ function Install-AnyDesk {
     Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
     Start-Process -FilePath $anydeskExe -ArgumentList "--install `"$installPath`" --start-with-win --silent" -Wait
 
-    Write-Host "🔐 Setting password for unattended access..." -ForegroundColor Yellow
-    Start-Process -FilePath $anydeskExe -ArgumentList "--set-password=$password" -Wait
-
-    Write-Host "✅ AnyDesk installed and configured." -ForegroundColor Green
+    Write-Host "✅ AnyDesk installed successfully." -ForegroundColor Green
 }
 
 function Create-HiddenAdmin {
