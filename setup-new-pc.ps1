@@ -66,6 +66,34 @@ function Show-Menu {
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
+function Install-AnyDesk-Manual {
+    $installer = "$env:TEMP\AnyDesk.exe"
+    Copy-Item -Path "/mnt/data/AnyDesk.exe" -Destination $installer -Force
+
+    Write-Host "⚙️ Installing AnyDesk silently (fallback)..." -ForegroundColor Yellow
+    Start-Process -FilePath $installer -ArgumentList "/silent" -Wait
+
+    if ($?) {
+        Write-Host "✅ AnyDesk installed via fallback successfully!" -ForegroundColor Green
+    } else {
+        Write-Host "❌ AnyDesk fallback installation failed." -ForegroundColor Red
+    }
+}
+
+function Install-UltraViewer-Manual {
+    $installer = "$env:TEMP\UltraViewer_setup.exe"
+    Copy-Item -Path "/mnt/data/UltraViewer_setup_6.6_en.exe" -Destination $installer -Force
+
+    Write-Host "⚙️ Installing UltraViewer silently (fallback)..." -ForegroundColor Yellow
+    Start-Process -FilePath $installer -ArgumentList "/silent" -Wait
+
+    if ($?) {
+        Write-Host "✅ UltraViewer installed via fallback successfully!" -ForegroundColor Green
+    } else {
+        Write-Host "❌ UltraViewer fallback installation failed." -ForegroundColor Red
+    }
+}
+
 function Install-NormalSoftware {
     Ensure-PackageManagers
     
@@ -91,13 +119,32 @@ function Install-NormalSoftware {
         if ($index -ge 1 -and $index -le $softwareList.Count) {
             $app = $softwareList[$index - 1]
             Write-Host "  Installing $($app.Name)..." -ForegroundColor Gray
-            
-            Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-            
-            if ($?) {
-                Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
-            } else {
-                Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
+
+            if ($app.Name -eq "AnyDesk") {
+                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                if (-not $?) {
+                    Write-Host "⚠️ Winget failed. Installing AnyDesk using fallback..." -ForegroundColor Yellow
+                    Install-AnyDesk-Manual
+                } else {
+                    Write-Host "✅ AnyDesk installed successfully!" -ForegroundColor Green
+                }
+            }
+            elseif ($app.Name -eq "UltraViewer") {
+                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                if (-not $?) {
+                    Write-Host "⚠️ Winget failed. Installing UltraViewer using fallback..." -ForegroundColor Yellow
+                    Install-UltraViewer-Manual
+                } else {
+                    Write-Host "✅ UltraViewer installed successfully!" -ForegroundColor Green
+                }
+            }
+            else {
+                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                if ($?) {
+                    Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
+                } else {
+                    Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
+                }
             }
         } else {
             Write-Host "  Invalid selection: $index" -ForegroundColor Red
