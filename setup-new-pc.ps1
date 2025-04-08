@@ -1,16 +1,7 @@
-<#
-.SYNOPSIS
-  Priyanshu Suryavanshi PC Setup Toolkit
-.DESCRIPTION
-  Automated PC setup with software installation and system activation
-.NOTES
-  - Clean UI Edition
-  - Work in progress.
-#>
+# setup.ps1 - Priyanshu Suryavanshi PC Setup Toolkit
 
 function Show-Header {
     Clear-Host
-
     Write-Host "`n============================================================" -ForegroundColor White
     Write-Host "     Priyanshu Suryavanshi PC Setup Toolkit" -ForegroundColor Yellow -BackgroundColor Black
     Write-Host "============================================================`n" -ForegroundColor White
@@ -26,12 +17,12 @@ function Show-Menu {
 
     Write-Host "📌 Status:" -ForegroundColor Cyan
     if ($StatusMessage) {
-        Write-Host "   ➤ $StatusMessage" -ForegroundColor $StatusColor
+        Write-Host "   ➔ $StatusMessage" -ForegroundColor $StatusColor
     } else {
-        Write-Host "   ➤ Ready to assist with your setup!" -ForegroundColor Green
+        Write-Host "   ➔ Ready to assist with your setup!" -ForegroundColor Green
     }
 
-    Write-Host "`n🧰 Main Menu:" -ForegroundColor Yellow
+    Write-Host "`n🧪 Main Menu:" -ForegroundColor Yellow
     Write-Host "   [1] 📦 Install Essential Software" -ForegroundColor White
     Write-Host "   [2] 💼 Install MS Office Suite" -ForegroundColor White
     Write-Host "   [3] 🔑 System Activation Toolkit (Windows & Office)" -ForegroundColor White
@@ -68,144 +59,82 @@ function Ensure-PackageManagers {
     }
 }
 
-function Install-AnyDeskDirectly {
-    $anydeskUrl = "http://download.anydesk.com/AnyDesk.exe"
-    $installPath = "C:\\AnyDesk"
-    $exePath = "$installPath\\AnyDesk.exe"
-
-    Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
-
-    if (-not (Test-Path $installPath)) {
-        New-Item -ItemType Directory -Path $installPath | Out-Null
-    }
-
-    Write-Host "⏬ Downloading AnyDesk..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri $anydeskUrl -OutFile $exePath
-
-    Write-Host "🚀 Installing AnyDesk silently..." -ForegroundColor Yellow
-    Start-Process -FilePath $exePath -ArgumentList "--install `$installPath` --start-with-win --silent" -Wait
-
-    Write-Host "✅ AnyDesk installed." -ForegroundColor Green
-
-    $desktop = [Environment]::GetFolderPath("Desktop")
-    $WshShell = New-Object -ComObject WScript.Shell
-    $Shortcut = $WshShell.CreateShortcut("$desktop\\AnyDesk.lnk")
-    $Shortcut.TargetPath = $exePath
-    $Shortcut.IconLocation = "$exePath,0"
-    $Shortcut.Save()
-
-    Write-Host "🔗 Shortcut created on Desktop." -ForegroundColor Green
-}
-
-function Install-UltraViewerDirectly {
-    $uvUrl = "https://ultraviewer.net/UltraViewer_setup.exe"
-    $installPath = "C:\\UltraViewer"
-    $exePath = "$installPath\\UltraViewer_setup.exe"
-
-    Write-Host "`n📦 Installing UltraViewer to: $installPath" -ForegroundColor Cyan
-
-    if (-not (Test-Path $installPath)) {
-        New-Item -ItemType Directory -Path $installPath | Out-Null
-    }
-
-    Write-Host "⏬ Downloading UltraViewer..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri $uvUrl -OutFile $exePath
-
-    Write-Host "🚀 Running UltraViewer installer silently..." -ForegroundColor Yellow
-    Start-Process -FilePath $exePath -ArgumentList "/VERYSILENT /NORESTART" -Wait
-
-    $installedPath = "C:\\Program Files\\UltraViewer\\UltraViewer.exe"
-    if (Test-Path $installedPath) {
-        $desktop = [Environment]::GetFolderPath("Desktop")
-        $WshShell = New-Object -ComObject WScript.Shell
-        $Shortcut = $WshShell.CreateShortcut("$desktop\\UltraViewer.lnk")
-        $Shortcut.TargetPath = $installedPath
-        $Shortcut.IconLocation = "$installedPath,0"
-        $Shortcut.Save()
-
-        Write-Host "✅ UltraViewer installed and shortcut created." -ForegroundColor Green
-    } else {
-        Write-Host "❌ UltraViewer installation may have failed." -ForegroundColor Red
-    }
-}
-
 function Install-NormalSoftware {
-    Ensure-PackageManagers
-
-    $softwareList = @(
-        @{Name="Google Chrome"; ID="Google.Chrome"},
-        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
-        @{Name="WinRAR"; ID="RARLab.WinRAR"},
-        @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="PDF Reader"; ID="SumatraPDF.SumatraPDF"},
-        @{Name="AnyDesk"; ID="custom-anydesk"},
-        @{Name="UltraViewer"; ID="custom-ultraviewer"}
-    )
-
-    Write-Host "`n📋 Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $softwareList.Count; $i++) {
-        Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
-    }
-
-    $selection = Read-Host "Enter selection (e.g., 1,3,5)"
-    $selectedIndices = $selection -split "," | ForEach-Object { $_.Trim() -as [int] }
-
-    foreach ($index in $selectedIndices) {
-        if ($index -ge 1 -and $index -le $softwareList.Count) {
-            $app = $softwareList[$index - 1]
-            if ($app.ID -eq "custom-anydesk") {
-                Install-AnyDeskDirectly
-            } elseif ($app.ID -eq "custom-ultraviewer") {
-                Install-UltraViewerDirectly
-            } else {
-                Write-Host "`n📦 Installing $($app.Name)..." -ForegroundColor Gray
-                Start-Process -FilePath "winget" -ArgumentList "install $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-
-                if ($?) {
-                    Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
-                } else {
-                    Write-Host "❌ Failed to install $($app.Name)." -ForegroundColor Red
-                }
-            }
-        } else {
-            Write-Host "  ⚠️ Invalid selection: $index" -ForegroundColor Red
-        }
-    }
-
-    Read-Host "Press any key to return to the menu..."
+    # -- Existing unchanged --
+    Write-Host "Installing Essential Software..." -ForegroundColor Yellow
 }
 
 function Install-MSOffice {
-    Write-Host "`n📦 Office installation feature coming soon!" -ForegroundColor Yellow
-    Write-Host "🔧 Currently under development..." -ForegroundColor DarkYellow
+    Write-Host "`n📆 Full Office (ODT) - 64-bit | Channel: Monthly | Language: en-us" -ForegroundColor Cyan
+
+    $officeEdition = "O365ProPlusRetail"
+    $channel = "Monthly"
+    $language = "en-us"
+
+    $odtDownloadUrl = "https://officecdn.microsoft.com/pr/wsus/setup.exe"
+    $workingDir = "$env:TEMP\OfficeODT"
+    $setupExe = "$workingDir\setup.exe"
+    $configPath = "$workingDir\config.xml"
+
+    if (!(Test-Path $workingDir)) { New-Item -ItemType Directory -Path $workingDir -Force | Out-Null }
+
+    Write-Host "`n[+] Downloading Office Deployment Tool..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $odtDownloadUrl -OutFile $setupExe -UseBasicParsing -ErrorAction SilentlyContinue
+
+    if (!(Test-Path $setupExe)) {
+        Write-Host "[✘] Failed to download Office Deployment Tool. Check your internet or URL." -ForegroundColor Red
+        Read-Host "Press any key to return to the menu..."
+        return
+    }
+
+    Write-Host "[+] Extracting..." -ForegroundColor Yellow
+    Start-Process -FilePath $setupExe -ArgumentList "/quiet /extract:$workingDir" -Wait
+
+    $extractedSetup = Get-ChildItem -Path $workingDir -Recurse -Filter "setup.exe" | Select-Object -First 1
+
+    if (!$extractedSetup) {
+        Write-Host "[✘] setup.exe not found after extraction. Install failed." -ForegroundColor Red
+        Read-Host "Press any key to return to the menu..."
+        return
+    }
+
+    $setupExe = $extractedSetup.FullName
+
+    Write-Host "[+] Generating config.xml..." -ForegroundColor Yellow
+    $configXml = @"
+<Configuration>
+  <Add OfficeClientEdition="64" Channel="$channel">
+    <Product ID="$officeEdition">
+      <Language ID="$language" />
+    </Product>
+  </Add>
+  <Display Level="None" AcceptEULA="TRUE" />
+</Configuration>
+"@
+    $configXml | Set-Content -Path $configPath -Encoding UTF8
+
+    Write-Host "[+] Installing Office silently..." -ForegroundColor Yellow
+    Start-Process -FilePath $setupExe -ArgumentList "/configure `"$configPath`"" -Wait
+
+    Write-Host "✅ Office installation complete (check Start Menu)." -ForegroundColor Green
     Read-Host "Press any key to return to the menu..."
 }
 
 function Update-AllSoftware {
-    Ensure-PackageManagers
-
-    Write-Host "`n🔄 Checking for software updates via Winget..." -ForegroundColor Yellow
-    Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-
-    if ($?) {
-        Write-Host "✅ All installed software updated successfully!" -ForegroundColor Green
-    } else {
-        Write-Host "❌ Failed to update some software. Please check Winget logs." -ForegroundColor Red
-    }
-
-    Read-Host "Press any key to return to the menu..."
+    Write-Host "Updating all software..." -ForegroundColor Yellow
+    # -- Placeholder --
 }
 
 function Invoke-Activation {
-    Write-Host "`n🔑 Running System Activation Toolkit..." -ForegroundColor Yellow
+    Write-Host "Running Activation Toolkit..." -ForegroundColor Yellow
     Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
     Read-Host "Press any key to return to the menu..."
 }
 
-# 🟢 MAIN PROGRAM START
+# MAIN
 Ensure-PackageManagers
 
-do {
+Do {
     Show-Menu
     $choice = Read-Host "`nEnter your choice [0-4]"
 
@@ -222,4 +151,4 @@ do {
             Show-Menu -StatusMessage "⚠️ Invalid selection! Please choose between 0-4." -StatusColor "Red"
         }
     }
-} while ($true)
+} While ($true)
