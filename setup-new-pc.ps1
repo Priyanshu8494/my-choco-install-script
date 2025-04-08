@@ -12,6 +12,20 @@ function Show-Header {
     Clear-Host
 
     Write-Host "`n============================================================" -ForegroundColor White
+    Write-Host "     _==/          i     i          \==_" -ForegroundColor DarkGray
+    Write-Host "   /XX/            |\___/|            \XX\" -ForegroundColor DarkGray
+    Write-Host " /XXXX\            |XXXXX|            /XXXX\" -ForegroundColor DarkGray
+    Write-Host "|XXXXXX\_         _XXXXXXX_         _/XXXXXX|" -ForegroundColor DarkGray
+    Write-Host "XXXXXXXXXXxxxxxxxXXXXXXXXXXXxxxxxxxXXXXXXXXXX" -ForegroundColor DarkGray
+    Write-Host "|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|" -ForegroundColor DarkGray
+    Write-Host "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" -ForegroundColor DarkGray
+    Write-Host "|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|" -ForegroundColor DarkGray
+    Write-Host " XXXXXX/^^^^"\XXXXXXXXXXXXXXXXXXXXX/^^^^"\XXXXXX" -ForegroundColor DarkGray
+    Write-Host "  |XX|       \XXX/^^\XXXXX/^^\XXX/       |XX|" -ForegroundColor DarkGray
+    Write-Host "    \|       \X/    \XXX/    \X/       |/" -ForegroundColor DarkGray
+    Write-Host "             !       \X/       !" -ForegroundColor DarkGray
+    Write-Host "                     !" -ForegroundColor DarkGray
+    Write-Host "`n============================================================" -ForegroundColor White
     Write-Host "     Priyanshu Suryavanshi PC Setup Toolkit" -ForegroundColor Yellow -BackgroundColor Black
     Write-Host "============================================================`n" -ForegroundColor White
 }
