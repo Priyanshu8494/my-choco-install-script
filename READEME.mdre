@@ -1,0 +1,51 @@
+# 💻 My Choco Install Script
+
+A fully automated PowerShell script to set up a new Windows machine using **Chocolatey**, **Winget**, and optional components like **MS Office**, **System Activation**, and more.
+
+---
+
+## 📦 Features
+
+- 📥 Install commonly used software via Chocolatey & Winget
+- 🧰 PowerShell-based UI for user-friendly selection
+- 🪟 Windows activation support
+- 🖥️ MS Office (ODT-based installer coming soon!)
+- 📜 Automatic logging of all install steps
+
+---
+
+## 📁 Project Structure
+
+
+---
+
+## 🚀 How to Use
+
+### Option 1: Run via PowerShell
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; `
+irm https://raw.githubusercontent.com/Priyanshu8494/my-choco-install-script/main/install.ps1 | iex
+
+---
+
+## 🚀 How to Use
+
+### Option 1: Run via PowerShell
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; `
+irm https://raw.githubusercontent.com/Priyanshu8494/my-choco-install-script/main/install.ps1 | iex
+📝 Requirements
+✅ Windows 10/11
+
+🛠 PowerShell 5.1 or newer
+
+🌐 Internet connection
+🙋‍♂️ Author
+Priyanshu Kumar
+📧 priyanshukumar.8394pk@gmail.com
+🔗 LinkedIn
+🐙 GitHub
+
+
