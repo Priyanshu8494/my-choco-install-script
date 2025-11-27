@@ -13,57 +13,82 @@
 # -------------------------------------------------------------------------
 function Show-Header {
     Clear-Host
-    Write-Host "`n============================================================" -ForegroundColor White
-    Write-Host '     ==/          i     i          \==' -ForegroundColor DarkGray
-    Write-Host '   /XX/            |\_/|            \XX\' -ForegroundColor DarkGray
-    Write-Host ' /XXXX\            |XXXXX|            /XXXX\' -ForegroundColor DarkGray
-    Write-Host '|XXXXXX\         _XXXXXXX         /XXXXXX|' -ForegroundColor DarkGray
-    Write-Host 'XXXXXXXXXXxxxxxxxXXXXXXXXXXXxxxxxxxXXXXXXXXXX' -ForegroundColor DarkGray
-    Write-Host '|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|' -ForegroundColor DarkGray
-    Write-Host 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' -ForegroundColor DarkGray
-    Write-Host '|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|' -ForegroundColor DarkGray
-    Write-Host ' XXXXXX/^^^^"\XXXXXXXXXXXXXXXXXXXXX/^^^^"\XXXXXX' -ForegroundColor DarkGray
-    Write-Host '  |XX|       \XXX/^^\XXXXX/^^\XXX/       |XX|' -ForegroundColor DarkGray
-    Write-Host '    \|       \X/    \XXX/    \X/       |/' -ForegroundColor DarkGray
-    Write-Host '             !       \X/       !' -ForegroundColor DarkGray
-    Write-Host '                     !' -ForegroundColor DarkGray
-    Write-Host "`n============================================================" -ForegroundColor White
-    Write-Host '     Priyanshu Suryavanshi PC Setup Toolkit' -ForegroundColor Yellow -BackgroundColor Black
-    Write-Host "============================================================`n" -ForegroundColor White
+    $width = 70
+    $line = "=" * $width
+    
+    Write-Host $line -ForegroundColor Cyan
+    Write-Host "    ____  ______   _____ ______ ______  __  __  ____" -ForegroundColor Magenta
+    Write-Host "   / __ \/ ____/  / ___// ____//_  __/ / / / / / __ \" -ForegroundColor Magenta
+    Write-Host "  / /_/ / /       \__ \/ __/    / /   / / / / / /_/ /" -ForegroundColor Cyan
+    Write-Host " / ____/ /___    ___/ / /___   / /   / /_/ / / ____/" -ForegroundColor Cyan
+    Write-Host "/_/    \____/   /____/_____/  /_/    \____/ /_/     " -ForegroundColor Blue
+    Write-Host ""
+    Write-Host "      Priyanshu Suryavanshi PC Setup Toolkit" -ForegroundColor White -BackgroundColor DarkBlue
+    Write-Host "      Automated Setup & Activation Utility" -ForegroundColor Gray
+    Write-Host $line -ForegroundColor Cyan
+    Write-Host ""
 }
 
 function Show-Menu {
     param (
         [string]$StatusMessage = "",
-        [string]$StatusColor   = "Yellow"
+        [string]$StatusColor = "Yellow"
     )
     Show-Header
-    Write-Host "📌 Status:" -ForegroundColor Cyan
+    
+    # Status Section
+    Write-Host " [ SYSTEM STATUS ]" -ForegroundColor Cyan
     if ($StatusMessage) {
-        Write-Host "   ➤ $StatusMessage" -ForegroundColor $StatusColor
-    } else {
-        Write-Host "   ➤ Ready to assist with your setup!" -ForegroundColor Green
+        Write-Host "  >> $StatusMessage" -ForegroundColor $StatusColor
     }
+    else {
+        Write-Host "  >> System Ready. Waiting for input..." -ForegroundColor Green
+    }
+    Write-Host ""
 
-    Write-Host "`n🧰 Main Menu:" -ForegroundColor Yellow
-    Write-Host "   [1] 📦 Install Essential Software" -ForegroundColor White
-    Write-Host "   [2] 💼 Install MS Office Suite" -ForegroundColor White
-    Write-Host "   [3] 🔑 System Activation Toolkit (Windows & Office)" -ForegroundColor White
-    Write-Host "   [4] 🔄 Update All Installed Software (via Winget)" -ForegroundColor White
-    Write-Host "   [5] 🚀 Advanced Toolkit (runs remote script)" -ForegroundColor White
-    Write-Host "   [0] ❌ Exit" -ForegroundColor Red
-    Write-Host "`n💡 Tip: Use numbers to navigate (e.g., 1 for software install)" -ForegroundColor DarkCyan
-    Write-Host "`n============================================================" -ForegroundColor DarkCyan
+    # Menu Section
+    Write-Host " [ MAIN MENU ]" -ForegroundColor Yellow
+    
+    $menuItems = @(
+        @{ Key = "1"; Label = "Install Essential Software"; Desc = "Browsers, Media, Utilities" },
+        @{ Key = "2"; Label = "Install MS Office Suite"; Desc = "Office 2021 Pro Plus" },
+        @{ Key = "3"; Label = "System Activation Toolkit"; Desc = "Windows & Office Activation" },
+        @{ Key = "4"; Label = "Update All Software"; Desc = "Upgrade via Winget" },
+        @{ Key = "5"; Label = "Advanced Toolkit"; Desc = "WinUtil by Chris Titus" },
+        @{ Key = "0"; Label = "Exit Application"; Desc = "Close the script" }
+    )
+
+    foreach ($item in $menuItems) {
+        Write-Host "  [" -NoNewline -ForegroundColor DarkGray
+        Write-Host "$($item.Key)" -NoNewline -ForegroundColor Cyan
+        Write-Host "] " -NoNewline -ForegroundColor DarkGray
+        Write-Host "$($item.Label)" -NoNewline -ForegroundColor White
+        if ($item.Desc) {
+            Write-Host " - $($item.Desc)" -ForegroundColor DarkGray
+        }
+        else {
+            Write-Host ""
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "  Tip: Enter the number corresponding to your choice." -ForegroundColor DarkCyan
+    Write-Host " ======================================================================" -ForegroundColor Cyan
 }
 
 function Show-Loading {
     param([string]$Message = "Processing")
-    $dots = ".", "..", "..."
-    for ($i = 0; $i -lt $dots.Count; $i++) {
-        Write-Host ("`r{0}{1}" -f $Message, $dots[$i]) -NoNewline
-        Start-Sleep -Milliseconds 300
+    $spinner = @('|', '/', '-', '\')
+    Write-Host -NoNewline "  ⏳ $Message " -ForegroundColor Yellow
+    
+    for ($i = 0; $i -lt 15; $i++) {
+        foreach ($char in $spinner) {
+            Write-Host -NoNewline "`b$char" -ForegroundColor Cyan
+            Start-Sleep -Milliseconds 100
+        }
     }
-    Write-Host "`r$Message... Done!`n" -ForegroundColor Green
+    Write-Host "`b✅ Done!" -ForegroundColor Green
+    Write-Host ""
 }
 
 # -------------------------------------------------------------------------
@@ -75,7 +100,8 @@ function Ensure-PackageManagers {
         Write-Host "`n❌ Winget is not installed or not available in PATH!" -ForegroundColor Red
         Write-Host "➡️ Please install Winget from: https://aka.ms/getwinget" -ForegroundColor Yellow
         # Do not automatically exit — allow user to continue for tasks that don't need winget
-    } else {
+    }
+    else {
         Write-Host "`n✅ Winget detected." -ForegroundColor Green
     }
 
@@ -87,10 +113,12 @@ function Ensure-PackageManagers {
             $chocoInstallScript = 'https://community.chocolatey.org/install.ps1'
             Invoke-Expression ((New-Object System.Net.WebClient).DownloadString($chocoInstallScript))
             Write-Host "✅ Chocolatey installation attempted. You may need to re-open shell." -ForegroundColor Green
-        } catch {
+        }
+        catch {
             Write-Host "❌ Chocolatey install failed: $($_.Exception.Message)" -ForegroundColor Red
         }
-    } else {
+    }
+    else {
         Write-Host "✅ Chocolatey detected." -ForegroundColor Green
     }
 }
@@ -113,7 +141,8 @@ function New-DesktopShortcut {
         $Shortcut.IconLocation = "$TargetPath,0"
         $Shortcut.Save()
         return $true
-    } catch {
+    }
+    catch {
         return $false
     }
 }
@@ -126,7 +155,8 @@ function Install-AnyDeskDirectly {
     $installPath = "C:\AnyDesk"
     $exePath = Join-Path $installPath "AnyDesk.exe"
 
-    Write-Host "`n📦 Installing AnyDesk to: $installPath" -ForegroundColor Cyan
+    Write-Host "`n [ INSTALLING ANYDESK ]" -ForegroundColor Cyan
+    Write-Host " Target: $installPath" -ForegroundColor Gray
     try {
         if (-not (Test-Path $installPath)) {
             New-Item -ItemType Directory -Path $installPath -Force | Out-Null
@@ -141,13 +171,16 @@ function Install-AnyDeskDirectly {
         if (Test-Path $exePath) {
             if (New-DesktopShortcut -TargetPath $exePath -ShortcutName "AnyDesk") {
                 Write-Host "✅ AnyDesk installed and shortcut created." -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Host "✅ AnyDesk downloaded. Shortcut creation failed or skipped." -ForegroundColor Yellow
             }
-        } else {
+        }
+        else {
             Write-Host "❌ AnyDesk installer file not found after download." -ForegroundColor Red
         }
-    } catch {
+    }
+    catch {
         Write-Host "❌ Error installing AnyDesk: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
@@ -157,7 +190,8 @@ function Install-UltraViewerDirectly {
     $installPath = "C:\UltraViewer"
     $exePath = Join-Path $installPath "UltraViewer_setup.exe"
 
-    Write-Host "`n📦 Installing UltraViewer to: $installPath" -ForegroundColor Cyan
+    Write-Host "`n [ INSTALLING ULTRAVIEWER ]" -ForegroundColor Cyan
+    Write-Host " Target: $installPath" -ForegroundColor Gray
     try {
         if (-not (Test-Path $installPath)) {
             New-Item -ItemType Directory -Path $installPath -Force | Out-Null
@@ -172,13 +206,16 @@ function Install-UltraViewerDirectly {
         if (Test-Path $installedPath) {
             if (New-DesktopShortcut -TargetPath $installedPath -ShortcutName "UltraViewer") {
                 Write-Host "✅ UltraViewer installed and shortcut created." -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Host "✅ UltraViewer installed. Shortcut creation failed or skipped." -ForegroundColor Yellow
             }
-        } else {
+        }
+        else {
             Write-Host "⚠️ UltraViewer installer ran but expected EXE not found; verify install location." -ForegroundColor Yellow
         }
-    } catch {
+    }
+    catch {
         Write-Host "❌ Error installing UltraViewer: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
@@ -187,24 +224,31 @@ function Install-NormalSoftware {
     Ensure-PackageManagers
 
     $softwareList = @(
-        @{Name="Google Chrome"; ID="Google.Chrome"},
-        @{Name="Mozilla Firefox"; ID="Mozilla.Firefox"},
-        @{Name="WinRAR"; ID="RARLab.WinRAR"},
-        @{Name="VLC Player"; ID="VideoLAN.VLC"},
-        @{Name="PDF Reader (Sumatra)"; ID="SumatraPDF.SumatraPDF"},
-        @{Name="AnyDesk"; ID="custom-anydesk"},
-        @{Name="UltraViewer"; ID="custom-ultraviewer"}
+        @{Name = "Google Chrome"; ID = "Google.Chrome" },
+        @{Name = "Mozilla Firefox"; ID = "Mozilla.Firefox" },
+        @{Name = "WinRAR"; ID = "RARLab.WinRAR" },
+        @{Name = "VLC Player"; ID = "VideoLAN.VLC" },
+        @{Name = "PDF Reader (Sumatra)"; ID = "SumatraPDF.SumatraPDF" },
+        @{Name = "AnyDesk"; ID = "custom-anydesk" },
+        @{Name = "UltraViewer"; ID = "custom-ultraviewer" }
     )
 
-    Write-Host "`n📋 Select software to install (Enter numbers separated by commas):" -ForegroundColor Yellow
+    Write-Host "`n [ SOFTWARE SELECTION ]" -ForegroundColor Yellow
+    Write-Host " Select software to install (e.g., 1,3,5 or 'all'):" -ForegroundColor Gray
+    Write-Host ""
     for ($i = 0; $i -lt $softwareList.Count; $i++) {
-        Write-Host "  $($i + 1). $($softwareList[$i].Name)" -ForegroundColor White
+        $num = $i + 1
+        $name = $softwareList[$i].Name
+        Write-Host "  [" -NoNewline -ForegroundColor DarkGray
+        Write-Host "$num" -NoNewline -ForegroundColor Cyan
+        Write-Host "] $name" -ForegroundColor White
     }
 
     $selection = Read-Host "Enter selection (e.g., 1,3,5). Or 'all' to install everything"
     if ($selection.Trim().ToLower() -eq 'all') {
         $selectedIndices = 1..$softwareList.Count
-    } else {
+    }
+    else {
         $selectedIndices = @()
         foreach ($token in ($selection -split ",")) {
             $t = $token.Trim()
@@ -219,23 +263,28 @@ function Install-NormalSoftware {
             $app = $softwareList[$index - 1]
             if ($app.ID -eq "custom-anydesk") {
                 Install-AnyDeskDirectly
-            } elseif ($app.ID -eq "custom-ultraviewer") {
+            }
+            elseif ($app.ID -eq "custom-ultraviewer") {
                 Install-UltraViewerDirectly
-            } else {
+            }
+            else {
                 Write-Host "`n📦 Installing $($app.Name) via winget..." -ForegroundColor Gray
                 try {
                     if (Get-Command winget -ErrorAction SilentlyContinue) {
                         # Use --accept flags to avoid prompts
                         Start-Process -FilePath "winget" -ArgumentList "install --id $($app.ID) --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow -ErrorAction Stop
                         Write-Host "✅ $($app.Name) installed successfully!" -ForegroundColor Green
-                    } else {
+                    }
+                    else {
                         Write-Host "⚠️ winget not available. Skipping $($app.Name)." -ForegroundColor Yellow
                     }
-                } catch {
+                }
+                catch {
                     Write-Host "❌ Failed to install $($app.Name): $($_.Exception.Message)" -ForegroundColor Red
                 }
             }
-        } else {
+        }
+        else {
             Write-Host "  ⚠️ Invalid selection: $index" -ForegroundColor Red
         }
     }
@@ -246,32 +295,165 @@ function Install-NormalSoftware {
 # -------------------------------------------------------------------------
 # Office installation
 # -------------------------------------------------------------------------
+function Install-OfficeOnline {
+    # --- CONFIGURATION ---
+    # Updated Link (1.33.zip)
+    $ZipUrl = "https://github.com/Priyanshu8494/my-choco-install-script/raw/refs/heads/main/Office%20Installer%201.33.zip"
+
+    $BaseDir = "C:\Temp\Office_Auto_Install"
+    $ZipPath = "$BaseDir\OfficeInstaller.zip"
+
+    # Clear Screen
+    Clear-Host
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "      OFFICE INSTALLER (UPDATED LINK)     " -ForegroundColor Cyan
+    Write-Host "==========================================" -ForegroundColor Cyan
+
+    # --- STEP 0: PREPARE FOLDER & BYPASS DEFENDER ---
+    Write-Host "[1/5] Preparing Security Exclusions..." -ForegroundColor Yellow
+
+    if (-not (Test-Path $BaseDir)) { New-Item -Path $BaseDir -ItemType Directory -Force | Out-Null }
+
+    try {
+        # Defender exclusion to prevent antivirus from deleting the setup
+        Add-MpPreference -ExclusionPath $BaseDir -ErrorAction SilentlyContinue
+        Write-Host "      Defender Exclusion Added." -ForegroundColor Green
+    }
+    catch {
+        Write-Host "      Warning: Admin rights needed for exclusion." -ForegroundColor Red
+    }
+
+    # --- STEP 1: DOWNLOAD ---
+    Write-Host "[2/5] Downloading Installer..." -ForegroundColor Yellow
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath -ErrorAction Stop
+        Write-Host "      Download Complete!" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error: Download Failed! Check your internet connection." -ForegroundColor Red
+        Write-Host "Details: $_" -ForegroundColor DarkGray
+        return
+    }
+
+    # --- STEP 2: UNBLOCK & EXTRACT ---
+    Write-Host "[3/5] Unblocking & Extracting..." -ForegroundColor Yellow
+
+    # SmartScreen Bypass
+    Unblock-File -Path $ZipPath
+
+    # Extract
+    Expand-Archive -Path $ZipPath -DestinationPath $BaseDir -Force
+    Write-Host "      Extraction Complete!" -ForegroundColor Green
+
+    # --- STEP 3: IDENTIFY FILE ---
+    Write-Host "[4/5] Selecting Installer..." -ForegroundColor Yellow
+
+    $Installer64 = Get-ChildItem -Path $BaseDir -Filter "Office Installer.exe" -Recurse | Select-Object -First 1
+    $Installer32 = Get-ChildItem -Path $BaseDir -Filter "Office Installer x86.exe" -Recurse | Select-Object -First 1
+
+    $TargetFile = $null
+    if ([Environment]::Is64BitOperatingSystem -and $Installer64) {
+        $TargetFile = $Installer64
+    }
+    elseif ($Installer32) {
+        $TargetFile = $Installer32
+    }
+
+    # --- STEP 4: RUN ---
+    if ($TargetFile) {
+        Write-Host "[5/5] Launching Installer..." -ForegroundColor Cyan
+        
+        # --- UPDATED ENGLISH MESSAGE ---
+        Write-Host "      NOTE: A window will open. Click 'Install' to proceed." -ForegroundColor Magenta
+        
+        Start-Process -FilePath $TargetFile.FullName -WorkingDirectory $TargetFile.Directory.FullName -Wait
+        
+        Write-Host "      Process Finished." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Error: 'Office Installer.exe' not found in zip!" -ForegroundColor Red
+    }
+
+    # --- CLEANUP ---
+    if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
+}
+
+
+function Create-OfficeOfflineInstaller {
+    $targetDir = "C:\OfficeOfflineInstaller"
+    $setupExe = Join-Path $targetDir "setup.exe"
+    $configFile = Join-Path $targetDir "Configuration.xml"
+
+    Write-Host "`n [ OFFICE OFFLINE INSTALLER CREATOR ]" -ForegroundColor Yellow
+    Write-Host " This will download Office files for offline use." -ForegroundColor Gray
+    Write-Host " Target Directory: $targetDir" -ForegroundColor Cyan
+    
+    $userPath = Read-Host " Press Enter to use default path, or type a new path"
+    if (-not [string]::IsNullOrWhiteSpace($userPath)) {
+        $targetDir = $userPath
+        $setupExe = Join-Path $targetDir "setup.exe"
+        $configFile = Join-Path $targetDir "Configuration.xml"
+    }
+
+    try {
+        # 1. Create Directory
+        if (-not (Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+        }
+
+        # 2. Download ODT Setup.exe
+        Write-Host "⏬ Downloading Office Deployment Tool..." -ForegroundColor Yellow
+        $odtUrl = "https://officecdn.microsoft.com/pr/wsus/setup.exe"
+        Invoke-WebRequest -Uri $odtUrl -OutFile $setupExe -UseBasicParsing -ErrorAction Stop
+
+        # 3. Create Configuration.xml
+        Write-Host "📝 Generating configuration file..." -ForegroundColor Yellow
+        $xmlContent = @"
+<Configuration>
+  <Add OfficeClientEdition="64" Channel="PerpetualVL2021">
+    <Product ID="ProPlus2021Volume">
+      <Language ID="en-us" />
+      <ExcludeApp ID="Groove" />
+      <ExcludeApp ID="Lync" />
+      <ExcludeApp ID="Bing" />
+    </Product>
+  </Add>
+  <Updates Enabled="TRUE" />
+  <Display Level="Full" AcceptEULA="TRUE" />
+</Configuration>
+"@
+        $xmlContent | Set-Content -Path $configFile -Encoding UTF8
+
+        # 4. Run Installer in Download Mode
+        Write-Host "⏬ Starting Office Download..." -ForegroundColor Yellow
+        Write-Host "   (This will take a while depending on internet speed. Please wait...)" -ForegroundColor Gray
+        
+        Start-Process -FilePath $setupExe -ArgumentList "/download Configuration.xml" -WorkingDirectory $targetDir -Wait -NoNewWindow -ErrorAction Stop
+        
+        Write-Host "✅ Office offline files downloaded successfully to: $targetDir" -ForegroundColor Green
+        Write-Host "   To install later, run: setup.exe /configure Configuration.xml" -ForegroundColor Gray
+    }
+    catch {
+        Write-Host "❌ Office download failed: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
 function Install-MSOffice {
-    Write-Host "`n💼 Choose MS Office installation method:" -ForegroundColor Yellow
-    Write-Host "   [1] Install via Winget (simpler & faster)" -ForegroundColor White
-    Write-Host "   [2] Install via Office Deployment Tool (ODT) (coming soon)" -ForegroundColor White
+    Write-Host "`n [ OFFICE INSTALLATION ]" -ForegroundColor Yellow
+    Write-Host " Choose installation method:" -ForegroundColor Gray
+    Write-Host "   [1] Office Online Installer" -ForegroundColor White
+    Write-Host "   [2] Office Offline Installer" -ForegroundColor White
     Write-Host "   [0] Go Back" -ForegroundColor DarkGray
     $subChoice = Read-Host "Enter your choice [0-2]"
 
     switch ($subChoice) {
         '1' {
-            Write-Host "`n📦 Installing Office (winget)..." -ForegroundColor Yellow
-            try {
-                if (Get-Command winget -ErrorAction SilentlyContinue) {
-                    Start-Process -FilePath "winget" -ArgumentList "install --id Microsoft.Office.LTSC2021.ProPlus --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow -ErrorAction Stop
-                    Write-Host "✅ Office installed successfully (via winget)!" -ForegroundColor Green
-                } else {
-                    Write-Host "❌ winget not available. Cannot install Office via winget." -ForegroundColor Red
-                }
-            } catch {
-                Write-Host "❌ Failed to install Office: $($_.Exception.Message)" -ForegroundColor Red
-            }
+            Install-OfficeOnline
             Read-Host "Press Enter to return to the menu..."
         }
         '2' {
-            # Placeholder for ODT flow (implement extractor, fixed path handling)
-            Write-Host "`n🚧 Office Deployment Tool integration is under development." -ForegroundColor Yellow
-            Show-Loading -Message "Showing status"
+            Create-OfficeOfflineInstaller
             Read-Host "Press Enter to return to the menu..."
         }
         default {
@@ -285,15 +467,18 @@ function Install-MSOffice {
 # -------------------------------------------------------------------------
 function Update-AllSoftware {
     Ensure-PackageManagers
-    Write-Host "`n🔄 Checking for software updates via winget..." -ForegroundColor Yellow
+    Write-Host "`n [ SYSTEM UPDATE ]" -ForegroundColor Yellow
+    Write-Host " Checking for software updates via winget..." -ForegroundColor Gray
     try {
         if (Get-Command winget -ErrorAction SilentlyContinue) {
             Start-Process -FilePath "winget" -ArgumentList "upgrade --all --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow -ErrorAction Stop
             Write-Host "✅ All installed software updated successfully (winget)." -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Host "❌ winget not available. Cannot perform updates." -ForegroundColor Red
         }
-    } catch {
+    }
+    catch {
         Write-Host "❌ Failed to update some software: $($_.Exception.Message)" -ForegroundColor Red
     }
     Read-Host "Press Enter to return to the menu..."
@@ -303,18 +488,15 @@ function Update-AllSoftware {
 # Activation (remote)
 # -------------------------------------------------------------------------
 function Invoke-Activation {
-    Write-Host "`n🔑 Running System Activation Toolkit (remote)... " -ForegroundColor Yellow
+    Write-Host "`n [ SYSTEM ACTIVATION ]" -ForegroundColor Yellow
+    Write-Host " Running System Activation Toolkit (remote)... " -ForegroundColor Gray
     Write-Host "⚠️ This will execute a remote script. Ensure you trust the source before proceeding." -ForegroundColor Magenta
-    $continue = Read-Host "Type YES to continue or anything else to cancel"
-    if ($continue -ne 'YES') {
-        Write-Host "Cancelled activation." -ForegroundColor Yellow
-        Read-Host "Press Enter to return to the menu..."
-        return
-    }
+
     try {
         # NOTE: Remote execution is potentially dangerous. Keep it as-is per original but wrapped.
-        Invoke-Expression (Invoke-RestMethod -Uri "https://get.activated.win")
-    } catch {
+        irm https://get.activated.win | iex
+    }
+    catch {
         Write-Host "❌ Activation script failed: $($_.Exception.Message)" -ForegroundColor Red
     }
     Read-Host "Press Enter to return to the menu..."
@@ -324,18 +506,15 @@ function Invoke-Activation {
 # Advanced Toolkit (remote)
 # -------------------------------------------------------------------------
 function Invoke-AdvancedToolkit {
-    Write-Host "`n🚀 Running Advanced Toolkit (remote script)..." -ForegroundColor Yellow
+    Write-Host "`n [ ADVANCED TOOLKIT ]" -ForegroundColor Yellow
+    Write-Host " Running Advanced Toolkit (remote script)..." -ForegroundColor Gray
     Write-Host "⚠️ This will execute a remote script (irm https://christitus.com/win | iex)." -ForegroundColor Magenta
-    $continue = Read-Host "Type YES to continue or anything else to cancel"
-    if ($continue -ne 'YES') {
-        Write-Host "Cancelled Advanced Toolkit." -ForegroundColor Yellow
-        Read-Host "Press Enter to return to the menu..."
-        return
-    }
+
     try {
         irm https://christitus.com/win | iex
         Write-Host "✅ Advanced Toolkit execution finished." -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "❌ Advanced Toolkit failed: $($_.Exception.Message)" -ForegroundColor Red
     }
     Read-Host "Press Enter to return to the menu..."
