@@ -1,12 +1,10 @@
-﻿<#
-.SYNOPSIS
-  Priyanshu Suryavanshi PC Setup Toolkit
-.DESCRIPTION
-  Automated PC setup with software installation and system activation
-.NOTES
-  - Clean UI Edition
-  - Work in progress.
-#>
+﻿# .SYNOPSIS
+#   Priyanshu Suryavanshi PC Setup Toolkit
+# .DESCRIPTION
+#   Automated PC setup with software installation and system activation
+# .NOTES
+#   - Clean UI Edition
+#   - Work in progress.
 
 # -------------------------------------------------------------------------
 # Helper functions
