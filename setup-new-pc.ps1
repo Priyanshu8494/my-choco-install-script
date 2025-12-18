@@ -6,6 +6,9 @@
 #   - Clean UI Edition
 #   - Work in progress.
 
+# Force TLS 1.2 for all web requests (Fixes download errors)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # -------------------------------------------------------------------------
 # Helper functions
 # -------------------------------------------------------------------------
