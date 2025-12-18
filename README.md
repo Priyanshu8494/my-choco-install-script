@@ -61,7 +61,8 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Priyanshu8494/my-choco
 ---
 
 ## 📸 Screenshots
-*(Add your screenshots here)*
+
+<img width="602" height="446" alt="image" src="https://github.com/user-attachments/assets/f954ff23-8a7e-47d6-abc2-e6a179fe0b78" />
 
 ---
 
