@@ -57,6 +57,7 @@ function Show-Menu {
         @{ Key = "4"; Label = "Update All Software"; Desc = "Upgrade via Winget" },
         @{ Key = "5"; Label = "Advanced Toolkit"; Desc = "WinUtil by Chris Titus" },
         @{ Key = "6"; Label = "Ram Optimization"; Desc = "Global Ram Optimization Script" },
+        @{ Key = "7"; Label = "Office Software"; Desc = "RabbitMQ & ElasticSearch" },
         @{ Key = "0"; Label = "Exit Application"; Desc = "Close the script" }
     )
 
@@ -550,7 +551,239 @@ function Launch-GlobalOptimizer {
         Write-Host "❌ Error extracting/running script: $($_.Exception.Message)" -ForegroundColor Red
     }
     
+
     Read-Host "Press Enter to return to the menu..."
+}
+
+# -------------------------------------------------------------------------
+# Office Software (Option 7) - RabbitMQ & ElasticSearch
+# -------------------------------------------------------------------------
+function Install-RabbitMQ {
+    Write-Host "`n [ RABBITMQ INSTALLATION ]" -ForegroundColor Cyan
+    $ErrorActionPreference = "Stop"
+
+    # Parameters
+    $NasPath = "\\174.156.4.3\fjt\Required softwares\Automation Software\Automations-Priyanshu\rabbitmq,elastic"
+    $ErlangExe = "otp_win64_25.1.2.exe"
+    $ErlangUrl = "https://github.com/erlang/otp/releases/download/OTP-25.1.2/otp_win64_25.1.2.exe"
+    $RabbitExe = "rabbitmq-server-3.11.3.exe"
+    $RabbitUrl = "https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.11.3/rabbitmq-server-3.11.3.exe"
+    $RabbitVersion = "3.11.3"
+
+    # Helper
+    function Download-Or-Copy-Ops {
+        param($FileName, $NasSource, $WebUrl)
+        $Dest = "$env:TEMP\$FileName"
+        $NasFile = "$NasSource\$FileName"
+        
+        if (Test-Path $NasFile) {
+            Write-Host "   Found $FileName on NAS. Copying..." -ForegroundColor Green
+            try { Copy-Item -Path $NasFile -Destination $Dest -Force; return $Dest }
+            catch { Write-Host "   Failed to copy from NAS: $($_.Exception.Message)" -ForegroundColor Yellow }
+        }
+        
+        Write-Host "   Downloading $FileName from Web..." -ForegroundColor Yellow
+        try { Invoke-WebRequest -Uri $WebUrl -OutFile $Dest; return $Dest }
+        catch { throw "Failed to download $FileName." }
+    }
+
+    try {
+        # Check Exists
+        $RabbitSbin = "C:\Program Files\RabbitMQ Server\rabbitmq_server-$RabbitVersion\sbin"
+        if (Test-Path "$RabbitSbin\rabbitmqctl.bat" -ErrorAction SilentlyContinue) {
+            Write-Host "✅ RabbitMQ detected. Skipping install steps." -ForegroundColor Green
+        }
+        else {
+            Write-Host "⏬ Getting Installers..." -ForegroundColor Yellow
+            $LocalErlang = Download-Or-Copy-Ops $ErlangExe $NasPath $ErlangUrl
+            $LocalRabbit = Download-Or-Copy-Ops $RabbitExe $NasPath $RabbitUrl
+
+            Write-Host "🚀 Installing Erlang (Interactive)..." -ForegroundColor Yellow
+            Start-Process -FilePath $LocalErlang -Wait
+            
+            # ERLANG_HOME Fix
+            $ErlangBase = "C:\Program Files"
+            $ErlangDir = Get-ChildItem -Path $ErlangBase -Filter "erl*" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+            if ($ErlangDir) { $env:ERLANG_HOME = $ErlangDir.FullName; Write-Host "   Set ERLANG_HOME: $($ErlangDir.FullName)" -ForegroundColor Gray }
+            
+            Write-Host "🚀 Installing RabbitMQ (Interactive)..." -ForegroundColor Yellow
+            Start-Process -FilePath $LocalRabbit -Wait
+        }
+
+        # Path & Env
+        if (Test-Path $RabbitSbin) {
+            $CurrentPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+            if ($CurrentPath -notlike "*$RabbitSbin*") {
+                [Environment]::SetEnvironmentVariable("Path", "$CurrentPath;$RabbitSbin", "Machine")
+                $env:Path += ";$RabbitSbin"
+                Write-Host "   Added RabbitMQ to PATH." -ForegroundColor Gray
+            }
+        }
+
+        # Plugins
+        if (Test-Path "$RabbitSbin\rabbitmq-plugins.bat") {
+            Write-Host "🔌 Enabling Plugins..." -ForegroundColor Cyan
+            Push-Location $RabbitSbin
+            & .\rabbitmq-plugins.bat enable rabbitmq_management
+            & .\rabbitmq-plugins.bat enable rabbitmq_shovel
+            & .\rabbitmq-plugins.bat enable rabbitmq_shovel_management
+            Pop-Location
+        }
+
+        # Firewall
+        Write-Host "🛡️ Configuring Firewall..." -ForegroundColor Cyan
+        $FirewallRules = @(@{Name = "RabbitMQ-AMQP"; Port = 5672 }, @{Name = "RabbitMQ-Mgmt"; Port = 15672 }, @{Name = "RabbitMQ-EPMD"; Port = 4369 }, @{Name = "RabbitMQ-Dist"; Port = 25672 })
+        foreach ($Rule in $FirewallRules) {
+            if (-not (Get-NetFirewallRule -DisplayName $Rule.Name -ErrorAction SilentlyContinue)) {
+                New-NetFirewallRule -DisplayName $Rule.Name -Direction Inbound -LocalPort $Rule.Port -Protocol TCP -Action Allow | Out-Null
+            }
+        }
+
+        # Admin User
+        Write-Host "👤 Configuring Admin User..." -ForegroundColor Cyan
+        $CtlPath = "$RabbitSbin\rabbitmqctl.bat"
+        if (Test-Path $CtlPath) {
+            Start-Process -FilePath $CtlPath -ArgumentList "add_user admin admin" -Wait -NoNewWindow
+            Start-Process -FilePath $CtlPath -ArgumentList "set_user_tags admin administrator" -Wait -NoNewWindow
+            Start-Process -FilePath $CtlPath -ArgumentList "set_permissions -p / admin "".*"" "".*"" "".*""" -Wait -NoNewWindow
+        }
+
+        Write-Host "✅ RabbitMQ Setup Complete. Login: admin/admin" -ForegroundColor Green
+
+    }
+    catch {
+        Write-Host "❌ RabbitMQ Error: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+function Install-ElasticSearch {
+    Write-Host "`n [ ELASTICSEARCH INSTALLATION ]" -ForegroundColor Cyan
+    $ErrorActionPreference = "Stop"
+
+    $ElasticVersion = "8.11.1"
+    $ZipName = "elasticsearch-8.11.1-windows-x86_64.zip"
+    $NasPath = "\\174.156.4.3\fjt\Required softwares\Automation Software\Automations-Priyanshu\rabbitmq,elastic"
+    $WebUrl = "https://artifacts.elastic.co/downloads/elasticsearch/$ZipName"
+    
+    $InstallDirRoot = "C:\Program Files\Elastic\Elasticsearch"
+    $ElasticInstallDir = "$InstallDirRoot\$ElasticVersion"
+    $ProgramDataDir = "C:\ProgramData\Elastic\Elasticsearch"
+    $JavaHome = "C:\Program Files\Java\jdk-17"
+    $NetworkJdkPath = "\\174.156.4.3\fjt\Required softwares\Update - Dev System\jdk-17.0.6_windows-x64_bin.exe"
+
+    try {
+        # Check Exists
+        if (Test-Path "$ElasticInstallDir\bin\elasticsearch-service.bat") {
+            Write-Host "✅ ElasticSearch detected. Skipping install." -ForegroundColor Green
+        }
+        else {
+            # Download
+            if (-not (Test-Path $InstallDirRoot)) { New-Item -Path $InstallDirRoot -ItemType Directory -Force | Out-Null }
+            $LocalZipPath = "$env:TEMP\$ZipName"
+            $NasZipPath = "$NasPath\$ZipName"
+            $FileReady = $false
+
+            if (Test-Path $NasZipPath) {
+                Write-Host "   Copying ZIP from NAS..." -ForegroundColor Green
+                try { Copy-Item -Path $NasZipPath -Destination $LocalZipPath -Force; $FileReady = $true } catch {}
+            }
+            if (-not $FileReady) {
+                Write-Host "   Downloading ZIP from Web..." -ForegroundColor Yellow
+                Invoke-WebRequest -Uri $WebUrl -OutFile $LocalZipPath
+            }
+
+            Write-Host "📦 Extracting..." -ForegroundColor Yellow
+            Expand-Archive -Path $LocalZipPath -DestinationPath $InstallDirRoot -Force
+            $ExtractedFolder = "$InstallDirRoot\elasticsearch-$ElasticVersion"
+            if (Test-Path $ExtractedFolder) { Rename-Item -Path $ExtractedFolder -NewName $ElasticVersion }
+        }
+
+        # JDK
+        if (-not (Test-Path "$JavaHome\bin\java.exe")) {
+            Write-Host "☕ Installing JDK (Interactive)..." -ForegroundColor Yellow
+            $LocalJdkPath = "$env:TEMP\jdk-17-installer.exe"
+            if (Test-Path $NetworkJdkPath) { Copy-Item -Path $NetworkJdkPath -Destination $LocalJdkPath -Force }
+            if (Test-Path $LocalJdkPath) { Start-Process -FilePath $LocalJdkPath -Wait }
+        }
+
+        # Env Vars
+        [System.Environment]::SetEnvironmentVariable("JAVA_HOME", $null, "User")
+        [System.Environment]::SetEnvironmentVariable("ES_JAVA_HOME", $JavaHome, "Machine")
+        [System.Environment]::SetEnvironmentVariable("ES_HOME", $ElasticInstallDir, "Machine")
+        [System.Environment]::SetEnvironmentVariable("ES_PATH_CONF", "$ProgramDataDir\config", "Machine")
+        [System.Environment]::SetEnvironmentVariable("ELASTIC_CLIENT_APIVERSIONING", "true", "Machine")
+
+        # Config
+        Write-Host "⚙️  Configuring..." -ForegroundColor Cyan
+        New-Item -Path "$ProgramDataDir\config" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$ProgramDataDir\data" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$ProgramDataDir\logs" -ItemType Directory -Force | Out-Null
+
+        $SourceConfig = "$ElasticInstallDir\config"
+        if (Test-Path "$SourceConfig\elasticsearch.yml") { Copy-Item -Path "$SourceConfig\*" -Destination "$ProgramDataDir\config" -Recurse -Force }
+
+        $ConfigContent = @"
+bootstrap.memory_lock: false
+cluster.name : elasticsearch
+http.port: 9200
+node.attr.data: true
+node.name : $env:COMPUTERNAME
+path.data: C:\ProgramData\Elastic\Elasticsearch\data
+path.logs: C:\ProgramData\Elastic\Elasticsearch\logs
+path.repo: C:\ProgramData\Elastic\Elasticsearch\backup
+transport.port: 9300
+xpack.license.self_generated.type: basic
+xpack.security.enabled: true
+action.auto_create_index: .monitoring*,.watches,.triggered_watches,.watcher-history*,.ml*
+"@
+        Set-Content -Path "$ProgramDataDir\config\elasticsearch.yml" -Value $ConfigContent
+        if (Test-Path "$ProgramDataDir\config\jvm.options") { Copy-Item -Path "$ProgramDataDir\config\jvm.options" -Destination "$ProgramDataDir\config\jvm.options.d" -Force }
+
+        # Firewall
+        $FwRules = @(@{Name = "ElasticSearch-HTTP"; Port = 9200 }, @{Name = "ElasticSearch-Trans"; Port = 9300 })
+        foreach ($Rule in $FwRules) {
+            if (-not (Get-NetFirewallRule -DisplayName $Rule.Name -ErrorAction SilentlyContinue)) {
+                New-NetFirewallRule -DisplayName $Rule.Name -Direction Inbound -LocalPort $Rule.Port -Protocol TCP -Action Allow | Out-Null
+            }
+        }
+
+        # Service
+        $ServiceBat = "$ElasticInstallDir\bin\elasticsearch-service.bat"
+        $EsService = Get-Service "elasticsearch" -ErrorAction SilentlyContinue
+        if (-not $EsService) {
+            if (Test-Path $ServiceBat) { Start-Process -FilePath $ServiceBat -ArgumentList "install elasticsearch" -Wait; Start-Service "elasticsearch" }
+        }
+        else { if ($EsService.Status -ne "Running") { Start-Service "elasticsearch" } }
+        
+        Write-Host "👤 Setting Up Admin (Triveni@123)..." -ForegroundColor Cyan
+        Start-Sleep -Seconds 15
+        
+        $UsersTool = "$ElasticInstallDir\bin\elasticsearch-users.bat"
+        if (Test-Path $UsersTool) {
+            $P = Start-Process -FilePath $UsersTool -ArgumentList "useradd admin -p Triveni@123 -r superuser" -Wait -PassThru -NoNewWindow
+            if ($P.ExitCode -ne 0) { Start-Process -FilePath $UsersTool -ArgumentList "passwd admin -p Triveni@123" -Wait -NoNewWindow }
+        }
+
+        Write-Host "✅ ElasticSearch Setup Complete. Login: admin/Triveni@123" -ForegroundColor Green
+
+    }
+    catch {
+        Write-Host "❌ ElasticSearch Error: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+function Install-OfficeSoftwareMenu {
+    Write-Host "`n [ OFFICE SOFTWARE ]" -ForegroundColor Yellow
+    Write-Host "   [1] Install RabbitMQ"
+    Write-Host "   [2] Install ElasticSearch"
+    Write-Host "   [0] Go Back"
+    
+    $sub = Read-Host "Enter Choice"
+    switch ($sub) {
+        '1' { Install-RabbitMQ }
+        '2' { Install-ElasticSearch }
+    }
+    Read-Host "Press Enter to return..."
 }
 
 # -------------------------------------------------------------------------
@@ -568,9 +801,8 @@ do {
         '3' { Invoke-Activation }
         '4' { Update-AllSoftware }
         '5' { Invoke-AdvancedToolkit }
-        '6' {
-            Launch-GlobalOptimizer
-        }
+        '6' { Launch-GlobalOptimizer }
+        '7' { Install-OfficeSoftwareMenu }
         '0' {
             Write-Host "`n👋 Thank you for using Priyanshu Suryavanshi PC Setup Toolkit!" -ForegroundColor Cyan
             break
