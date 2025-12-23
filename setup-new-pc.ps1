@@ -599,6 +599,7 @@ function Install-RabbitMQ {
             $LocalRabbit = Download-Or-Copy-Ops $RabbitExe $NasPath $RabbitUrl
 
             Write-Host "🚀 Installing Erlang (Interactive)..." -ForegroundColor Yellow
+            Write-Host "⚠️  Please verify and complete the installation in the opened window." -ForegroundColor Magenta
             Start-Process -FilePath $LocalErlang -Wait
             
             # ERLANG_HOME Fix
@@ -607,6 +608,7 @@ function Install-RabbitMQ {
             if ($ErlangDir) { $env:ERLANG_HOME = $ErlangDir.FullName; Write-Host "   Set ERLANG_HOME: $($ErlangDir.FullName)" -ForegroundColor Gray }
             
             Write-Host "🚀 Installing RabbitMQ (Interactive)..." -ForegroundColor Yellow
+            Write-Host "⚠️  Please verify and complete the installation in the opened window." -ForegroundColor Magenta
             Start-Process -FilePath $LocalRabbit -Wait
         }
 
@@ -639,21 +641,146 @@ function Install-RabbitMQ {
             }
         }
 
-        # Admin User
-        Write-Host "👤 Configuring Admin User..." -ForegroundColor Cyan
+        # Admin User (Default: guest/guest)
+        Write-Host "👤 Configuring Default User (guest/guest)..." -ForegroundColor Cyan
         $CtlPath = "$RabbitSbin\rabbitmqctl.bat"
         if (Test-Path $CtlPath) {
-            Start-Process -FilePath $CtlPath -ArgumentList "add_user admin admin" -Wait -NoNewWindow
-            Start-Process -FilePath $CtlPath -ArgumentList "set_user_tags admin administrator" -Wait -NoNewWindow
-            Start-Process -FilePath $CtlPath -ArgumentList "set_permissions -p / admin "".*"" "".*"" "".*""" -Wait -NoNewWindow
+            # Method 1: Reset Password to Default
+            Start-Process -FilePath $CtlPath -ArgumentList "change_password guest guest" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+            Start-Process -FilePath $CtlPath -ArgumentList "set_user_tags guest administrator" -Wait -NoNewWindow
+            Start-Process -FilePath $CtlPath -ArgumentList "set_permissions -p / guest "".*"" "".*"" "".*""" -Wait -NoNewWindow
         }
 
-        Write-Host "✅ RabbitMQ Setup Complete. Login: admin/admin" -ForegroundColor Green
+        # Auto-Start
+        Set-Service -Name "RabbitMQ" -StartupType Automatic -ErrorAction SilentlyContinue
+        Write-Host "   Service Start Mode set to Automatic." -ForegroundColor Gray
+
+        Write-Host "✅ RabbitMQ Setup Complete. Login: guest/guest" -ForegroundColor Green
 
     }
     catch {
         Write-Host "❌ RabbitMQ Error: $($_.Exception.Message)" -ForegroundColor Red
     }
+}
+
+function Get-RabbitMQStatus {
+    Write-Host "`n [ RABBITMQ STATUS CHECK ]" -ForegroundColor Cyan
+    
+    # 1. Service Status
+    $service = Get-Service -Name "RabbitMQ" -ErrorAction SilentlyContinue
+    if ($service) {
+        $statusColor = if ($service.Status -eq 'Running') { "Green" } else { "Red" }
+        Write-Host "   Service: " -NoNewline
+        Write-Host "$($service.Status)" -ForegroundColor $statusColor
+    }
+    else {
+        Write-Host "   Service: " -NoNewline
+        Write-Host "Not Installed / Not Found" -ForegroundColor Red
+    }
+
+    # 2. Port Checks
+    Write-Host "`n   Checking Ports:" -ForegroundColor Gray
+    $ports = @(
+        @{ Port = 5672; Name = "AMQP" },
+        @{ Port = 15672; Name = "Management" },
+        @{ Port = 4369; Name = "Erlang Mapper" },
+        @{ Port = 25672; Name = "Distribution" }
+    )
+
+    foreach ($p in $ports) {
+        $msg = "   - Port $($p.Port) ($($p.Name))..."
+        # Pad for alignment
+        if ($msg.Length -lt 40) { $msg = $msg + " " * (40 - $msg.Length) }
+        Write-Host $msg -NoNewline -ForegroundColor Gray
+
+        $conn = Get-NetTCPConnection -LocalPort $p.Port -State Listen -ErrorAction SilentlyContinue
+        if ($conn) {
+            Write-Host "✅ LISTENING" -ForegroundColor Green
+        }
+        else {
+            Write-Host "❌ CLOSED / UNUSED" -ForegroundColor DarkGray
+        }
+    }
+    Write-Host ""
+}
+
+
+function Repair-RabbitMQ {
+    Write-Host "`n [ REPAIRING RABBITMQ ]" -ForegroundColor Yellow
+    $ErrorActionPreference = "SilentlyContinue"
+
+    # 1. Find sbin path
+    $RabbitVersion = "3.11.3"
+    $RabbitSbin = "C:\Program Files\RabbitMQ Server\rabbitmq_server-$RabbitVersion\sbin"
+
+    if (-not (Test-Path $RabbitSbin)) {
+        Write-Host "❌ RabbitMQ sbin directory not found at expected path: $RabbitSbin" -ForegroundColor Red
+        Write-Host "   Repair cannot proceed if RabbitMQ is not installed in the default location." -ForegroundColor Gray
+        return
+    }
+
+    # 2. Re-enable Plugins
+    if (Test-Path "$RabbitSbin\rabbitmq-plugins.bat") {
+        Write-Host "🔌 Re-enabling Plugins..." -ForegroundColor Cyan
+        Push-Location $RabbitSbin
+        & .\rabbitmq-plugins.bat enable rabbitmq_management
+        & .\rabbitmq-plugins.bat enable rabbitmq_shovel
+        & .\rabbitmq-plugins.bat enable rabbitmq_shovel_management
+        Pop-Location
+        Write-Host "   Plugins enabled command sent." -ForegroundColor Gray
+    }
+    else {
+        Write-Host "⚠️  rabbitmq-plugins.bat not found." -ForegroundColor Yellow
+    }
+
+    # 3. Firewall Rules (Re-apply)
+    Write-Host "🛡️  Refreshing Firewall Rules..." -ForegroundColor Cyan
+    $FirewallRules = @(@{Name = "RabbitMQ-AMQP"; Port = 5672 }, @{Name = "RabbitMQ-Mgmt"; Port = 15672 }, @{Name = "RabbitMQ-EPMD"; Port = 4369 }, @{Name = "RabbitMQ-Dist"; Port = 25672 })
+    foreach ($Rule in $FirewallRules) {
+        if (-not (Get-NetFirewallRule -DisplayName $Rule.Name -ErrorAction SilentlyContinue)) {
+            New-NetFirewallRule -DisplayName $Rule.Name -Direction Inbound -LocalPort $Rule.Port -Protocol TCP -Action Allow | Out-Null
+            Write-Host "   Created rule for $($Rule.Name) ($($Rule.Port))" -ForegroundColor Gray
+        }
+    }
+
+    # 4. Reset Default User (guest/guest)
+    Write-Host "👤 Resetting Default User (guest/guest)..." -ForegroundColor Cyan
+    $CtlPath = "$RabbitSbin\rabbitmqctl.bat"
+    if (Test-Path $CtlPath) {
+        # Method 2: Delete & Re-Create
+        # 1. Stop App
+        Start-Process -FilePath $CtlPath -ArgumentList "stop_app" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+        
+        # 2. Delete guest
+        Start-Process -FilePath $CtlPath -ArgumentList "delete_user guest" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+        
+        # 3. Add guest
+        Start-Process -FilePath $CtlPath -ArgumentList "add_user guest guest" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+        
+        # 4. Set Tags & Perms
+        Start-Process -FilePath $CtlPath -ArgumentList "set_user_tags guest administrator" -Wait -NoNewWindow
+        Start-Process -FilePath $CtlPath -ArgumentList "set_permissions -p / guest "".*"" "".*"" "".*""" -Wait -NoNewWindow
+        
+        # 6. Start App
+        Start-Process -FilePath $CtlPath -ArgumentList "start_app" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+        
+        Write-Host "   Default credentials restored." -ForegroundColor Gray
+    }
+
+    # 5. Restart Service
+    Write-Host "🔄 Restarting RabbitMQ Service..." -ForegroundColor Cyan
+    $service = Get-Service -Name "RabbitMQ" -ErrorAction SilentlyContinue
+    if ($service) {
+        Set-Service -Name "RabbitMQ" -StartupType Automatic
+        Restart-Service -Name "RabbitMQ" -Force
+        Write-Host "✅ Service Restarted & Set to Automatic." -ForegroundColor Green
+    }
+    else {
+        Write-Host "❌ RabbitMQ Service not found." -ForegroundColor Red
+    }
+
+    Write-Host "`n✅ Repair sequence finished. Please check status." -ForegroundColor Green
+    Write-Host "   ℹ️  Login Details: http://localhost:15672 (guest / guest)" -ForegroundColor Gray
 }
 
 function Install-ElasticSearch {
@@ -751,9 +878,16 @@ action.auto_create_index: .monitoring*,.watches,.triggered_watches,.watcher-hist
         $ServiceBat = "$ElasticInstallDir\bin\elasticsearch-service.bat"
         $EsService = Get-Service "elasticsearch" -ErrorAction SilentlyContinue
         if (-not $EsService) {
-            if (Test-Path $ServiceBat) { Start-Process -FilePath $ServiceBat -ArgumentList "install elasticsearch" -Wait; Start-Service "elasticsearch" }
+            if (Test-Path $ServiceBat) { 
+                Start-Process -FilePath $ServiceBat -ArgumentList "install elasticsearch" -Wait
+                Set-Service -Name "elasticsearch" -StartupType Automatic
+                Start-Service "elasticsearch" 
+            }
         }
-        else { if ($EsService.Status -ne "Running") { Start-Service "elasticsearch" } }
+        else { 
+            Set-Service -Name "elasticsearch" -StartupType Automatic
+            if ($EsService.Status -ne "Running") { Start-Service "elasticsearch" } 
+        }
         
         Write-Host "👤 Setting Up Admin (Triveni@123)..." -ForegroundColor Cyan
         Start-Sleep -Seconds 15
@@ -772,16 +906,82 @@ action.auto_create_index: .monitoring*,.watches,.triggered_watches,.watcher-hist
     }
 }
 
+function Repair-ElasticSearch {
+    Write-Host "`n [ REPAIRING ELASTICSEARCH ]" -ForegroundColor Yellow
+    $ErrorActionPreference = "SilentlyContinue"
+
+    $ElasticVersion = "8.11.1"
+    $InstallDirRoot = "C:\Program Files\Elastic\Elasticsearch"
+    $ElasticInstallDir = "$InstallDirRoot\$ElasticVersion"
+    $UsersTool = "$ElasticInstallDir\bin\elasticsearch-users.bat"
+
+    # 1. Validation
+    if (-not (Test-Path $UsersTool)) {
+        Write-Host "❌ ElasticSearch tool not found at: $UsersTool" -ForegroundColor Red
+        Write-Host "   Cannot proceed with repair." -ForegroundColor Gray
+        return
+    }
+
+    # 2. Reset Admin Credentials
+    Write-Host "👤 Resetting Admin User (admin/Triveni@123)..." -ForegroundColor Cyan
+    # Try adding user first
+    $P = Start-Process -FilePath $UsersTool -ArgumentList "useradd admin -p Triveni@123 -r superuser" -Wait -PassThru -NoNewWindow
+    if ($P.ExitCode -ne 0) {
+        # If add failed (exists), update password
+        Start-Process -FilePath $UsersTool -ArgumentList "passwd admin -p Triveni@123" -Wait -NoNewWindow
+    }
+    Write-Host "   Admin credentials updated." -ForegroundColor Gray
+
+    # 3. Service Auto-Start & Restart
+    Write-Host "🔄 Restarting ElasticSearch Service..." -ForegroundColor Cyan
+    $service = Get-Service -Name "elasticsearch" -ErrorAction SilentlyContinue
+    if ($service) {
+        Set-Service -Name "elasticsearch" -StartupType Automatic
+        Restart-Service -Name "elasticsearch" -Force
+        Write-Host "✅ Service Restarted & Set to Automatic." -ForegroundColor Green
+    }
+    else {
+        Write-Host "❌ elasticsearch Service not found." -ForegroundColor Red
+    }
+
+    # 4. Port Check
+    Write-Host "`n   Checking Ports:" -ForegroundColor Gray
+    $ports = @(
+        @{ Port = 9200; Name = "HTTP" },
+        @{ Port = 9300; Name = "Transport" }
+    )
+    foreach ($p in $ports) {
+        $msg = "   - Port $($p.Port) ($($p.Name))..."
+        if ($msg.Length -lt 30) { $msg = $msg + " " * (30 - $msg.Length) }
+        Write-Host $msg -NoNewline -ForegroundColor Gray
+        if (Get-NetTCPConnection -LocalPort $p.Port -State Listen -ErrorAction SilentlyContinue) {
+            Write-Host "✅ LISTENING" -ForegroundColor Green
+        }
+        else {
+            Write-Host "❌ CLOSED" -ForegroundColor Red
+        }
+    }
+
+    Write-Host "`n✅ Repair sequence finished." -ForegroundColor Green
+    Write-Host "   ℹ️  Login Details: admin / Triveni@123" -ForegroundColor Gray
+}
+
 function Install-OfficeSoftwareMenu {
     Write-Host "`n [ OFFICE SOFTWARE ]" -ForegroundColor Yellow
     Write-Host "   [1] Install RabbitMQ"
     Write-Host "   [2] Install ElasticSearch"
+    Write-Host "   [3] Check RabbitMQ Status"
+    Write-Host "   [4] Repair RabbitMQ (Enable Plugins & Restart)"
+    Write-Host "   [5] Repair ElasticSearch (Reset Admin & Restart)"
     Write-Host "   [0] Go Back"
     
     $sub = Read-Host "Enter Choice"
     switch ($sub) {
         '1' { Install-RabbitMQ }
         '2' { Install-ElasticSearch }
+        '3' { Get-RabbitMQStatus }
+        '4' { Repair-RabbitMQ }
+        '5' { Repair-ElasticSearch }
     }
     Read-Host "Press Enter to return..."
 }
