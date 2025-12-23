@@ -932,7 +932,17 @@ function Repair-ElasticSearch {
     }
     Write-Host "   Admin credentials updated." -ForegroundColor Gray
 
-    # 3. Service Auto-Start & Restart
+    # 3. Firewall Rules (Re-apply)
+    Write-Host "🛡️  Refreshing Firewall Rules..." -ForegroundColor Cyan
+    $FwRules = @(@{Name = "ElasticSearch-HTTP"; Port = 9200 }, @{Name = "ElasticSearch-Trans"; Port = 9300 })
+    foreach ($Rule in $FwRules) {
+        if (-not (Get-NetFirewallRule -DisplayName $Rule.Name -ErrorAction SilentlyContinue)) {
+            New-NetFirewallRule -DisplayName $Rule.Name -Direction Inbound -LocalPort $Rule.Port -Protocol TCP -Action Allow | Out-Null
+            Write-Host "   Created rule for $($Rule.Name) ($($Rule.Port))" -ForegroundColor Gray
+        }
+    }
+
+    # 4. Service Auto-Start & Restart
     Write-Host "🔄 Restarting ElasticSearch Service..." -ForegroundColor Cyan
     $service = Get-Service -Name "elasticsearch" -ErrorAction SilentlyContinue
     if ($service) {
@@ -944,7 +954,7 @@ function Repair-ElasticSearch {
         Write-Host "❌ elasticsearch Service not found." -ForegroundColor Red
     }
 
-    # 4. Port Check
+    # 5. Port Check
     Write-Host "`n   Checking Ports:" -ForegroundColor Gray
     $ports = @(
         @{ Port = 9200; Name = "HTTP" },
@@ -963,7 +973,8 @@ function Repair-ElasticSearch {
     }
 
     Write-Host "`n✅ Repair sequence finished." -ForegroundColor Green
-    Write-Host "   ℹ️  Login Details: admin / Triveni@123" -ForegroundColor Gray
+    Write-Host "`n✅ Repair sequence finished." -ForegroundColor Green
+    Write-Host "   ℹ️  Login Details: http://localhost:9200 (admin / Triveni@123)" -ForegroundColor Gray
 }
 
 function Install-OfficeSoftwareMenu {
